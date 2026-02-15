@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Result-Oriented Execution | Fireflies.ai</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/theme/black.min.css">
+
+    <!-- Theme Helper -->
+    <style>
+        :root {
+            --brand-primary: #6366f1;
+            --text-secondary: #94a3b8;
+        }
+
+        .reveal h1,
+        .reveal h2,
+        .reveal h3 {
+            text-transform: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        .reveal p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-weight: 300;
+            color: var(--text-secondary);
+        }
+
+        .highlight {
+            color: var(--brand-primary);
+            font-weight: 700;
+        }
+
+        .video-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            max-height: 60vh;
+            display: block;
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+            text-align: left;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <!-- SLIDE 1: TITLE -->
+            <section>
+                <div
+                    style="background: rgba(99, 102, 241, 0.1); width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justifyContent: center; margin: 0 auto 40px auto;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <h3>Execution Intelligence</h3>
+                <p>Aligning Notion with Krish's Q1 Vision</p>
+                <p style="font-size: 0.6em; opacity: 0.6; margin-top: 50px;">Use Arrow Keys to Navigate →</p>
+            </section>
+
+            <!-- SLIDE 2: THE PROBLEM -->
+            <section>
+                <h3>The Goal: Scaling Leadership without 1:1s</h3>
+                <div class="cols">
+                    <div>
+                        <p>"I can't have meaningful 1:1s with 50+ people."</p>
+                        <p>"I need a way to unblock people in 10 minutes a day."</p>
+                        <p class="highlight">- Krish</p>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">50+</div>
+                        <div class="stat-label">Direct Reports</div>
+                        <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 15px 0;"></div>
+                        <div class="stat-value">10m</div>
+                        <div class="stat-label">Available Time/Day</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLIDE 3: THE SOLUTION (DRILL DOWN) -->
+            <section>
+                <h4>Solution 1: The Executive Drill-Down</h4>
+                <p>From "Health Check" to "Unblocking" in 2 clicks.</p>
+                <div class="video-container">
+                    <img src="/deck/videos/drill_down.webp" alt="Drill Down Demo">
+                </div>
+            </section>
+
+            <!-- SLIDE 4: ACCOUNTABILITY -->
+            <section>
+                <h4>Solution 2: Implicit Accountability</h4>
+                <div class="cols">
+                    <div>
+                        <ul style="font-size: 0.8em; line-height: 1.8;">
+                            <li><strong>Sparklines</strong>: Visualize 4-week velocity trends.</li>
+                            <li><strong>Stale Signal</strong>: Detects "Quiet Quitting" (>5 days inactive).</li>
+                            <li><strong>Watchlist</strong>: One-click filter to hide "Green" status.</li>
+                        </ul>
+                    </div>
+                    <div class="video-container">
+                        <img src="/deck/videos/accountability.webp" alt="Accountability Demo">
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLIDE 2.5: ALIGNMENT (INSERTED) -->
+            <section>
+                <h3>Alignment: A Visual Layer</h3>
+                <div class="cols">
+                    <div class="stat-box" style="background: rgba(99, 102, 241, 0.1); border: 1px solid #6366f1;">
+                        <h5 style="color: #6366f1; margin-bottom: 10px;">Greg's Architecture</h5>
+                        <p style="font-size: 0.7em;">Database, MCPs, Schema</p>
+                    </div>
+                    <div style="text-align: center; font-size: 2em; opacity: 0.5;">+</div>
+                </div>
+                <div class="cols" style="margin-top: 20px;">
+                    <div>
+                        <ul style="font-size: 0.8em; line-height: 1.6;">
+                            <li><strong>No Replacement</strong>: We are not rebuilding the backend.</li>
+                            <li><strong>No Data Migration</strong>: Live read/write to existing Notion DBs.</li>
+                            <li><strong>Force Multiplier</strong>: This is simply a "Lens" to view Greg's data through
+                                Krish's perspective.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLIDE 5: EXECUTIVE SCAN -->
+            <section>
+                <h4>Solution 3: The 10-Minute Scan</h4>
+                <p>Top Risks prioritized by business impact.</p>
+                <div class="video-container">
+                    <img src="/deck/videos/executive.webp" alt="Executive Scan Demo">
+                </div>
+            </section>
+
+            <!-- SLIDE 6: SUMMARY -->
+            <section>
+                <h3>One Source of Truth</h3>
+                <p>Zero new tools. Zero new forms.</p>
+                <p>We just visualized <strong>Greg's Notion Data</strong>.</p>
+                <a href="http://localhost:3000" target="_blank"
+                    style="display: inline-block; margin-top: 40px; padding: 15px 30px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                    Open Live Dashboard
+                </a>
+            </section>
+
+            <!-- SLIDE 7: QUESTIONS (INSERTED) -->
+            <section>
+                <h3>Next Steps: Questions for Greg</h3>
+                <div class="cols">
+                    <div>
+                        <ul style="font-size: 0.85em; line-height: 2;">
+                            <li><strong>GitHub/Slack MCPs</strong>: What is the current status of these integrations?
+                            </li>
+                            <li><strong>API Limits</strong>: Do we have specific rate limits for real-time bidirectional
+                                syncing?</li>
+                            <li><strong>Data Archives</strong>: How far back does our historical data access go?</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.0.4/reveal.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide'
+        });
+    </script>
+</body>
+
+</html>

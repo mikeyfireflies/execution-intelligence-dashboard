@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Pitch: Aligning Notion with Krish's Q1 Vision</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fff;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #111;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            font-size: 1.4em;
+        }
+
+        p {
+            margin-bottom: 1em;
+        }
+
+        ul {
+            margin-bottom: 1em;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 0.5em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        blockquote {
+            background: #f9f9f9;
+            border-left: 4px solid #0070f3;
+            margin: 1.5em 0;
+            padding: 1em;
+            font-style: italic;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .intro {
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        @media print {
+            body {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            img {
+                page-break-inside: avoid;
+            }
+
+            h2 {
+                page-break-before: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Executive Pitch: Aligning Notion with Krish's Q1 Vision</h1>
+
+    <p class="intro">This guide is structured to help you pitch the dashboard by showing how every UI element is a
+        direct response to <strong>Krish's objectives</strong>.</p>
+
+    <hr>
+
+    <h2>1. The Strategy: "Vision Visualization"</h2>
+
+    <p>Before diving into the features, here is the high-level mapping of how every technical decision was a response to
+        a specific leadership goal:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Krish's Goal</th>
+                <th>Dashboard Implementation</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Scaling without 1:1s</strong></td>
+                <td><strong>Drill-down logic</strong>: Saves Krish 20 mins of digging by jumping directly from KPIs to
+                    stuck work.</td>
+            </tr>
+            <tr>
+                <td><strong>Individual Accountability</strong></td>
+                <td><strong>High-density grid</strong>: Every owner has a Velocity Sparkline for early trend detection.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Focus on Trends</strong></td>
+                <td><strong>Metric Charting</strong>: Auto-generated Deltas, Area Charts, and <strong>Interactive
+                        Toggles</strong> (14/30/90 days) for flexible time-horizon analysis.</td>
+            </tr>
+            <tr>
+                <td><strong>Signal Clarity</strong></td>
+                <td><strong>Risk Suppression</strong>: "Green" status work is automatically noise-filtered, and
+                    <strong>Logic Tooltips</strong> explain exactly how health scores are derived.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Unblocking at Scale</strong></td>
+                <td><strong>Watchlist Toggle</strong>: One click to hide healthy work and instantly find the hidden
+                    fires.</td>
+            </tr>
+            <tr>
+                <td><strong>One Source of Truth</strong></td>
+                <td><strong>Visual Layer</strong>: Zero new tools. It just puts a "visor" on Greg's existing Notion
+                    data.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>2. Key Alignment Snapshot (Goal → Solution)</h2>
+
+    <p><strong>Krish's Goal</strong>: <em>"Scaling Leadership without 1:1s"</em><br>
+        <strong>What I Did</strong>: Built the <strong>Executive Drill-down</strong>.<br>
+    <ul>
+        <li><em>Why</em>: Krish can click "Overdue" and instantly see who is stuck, preventing 20 minutes of digging.
+        </li>
+    </ul>
+    </p>
+
+    <p><strong>Krish's Goal</strong>: <em>"Individual Accountability"</em><br>
+        <strong>What I Did</strong>: Built the <strong>Intelligence Console</strong>.<br>
+    <ul>
+        <li><em>Why</em>: Replaced bulky cards with high-density grids and Velocity Sparklines to detect performance
+            drops early.</li>
+    </ul>
+    </p>
+
+    <p><strong>Krish's Goal</strong>: <em>"Focus on Trends/Deltas"</em><br>
+        <strong>What I Did</strong>: built <strong>Metric Trend Charting</strong>.<br>
+    <ul>
+        <li><em>Why</em>: Every metric now shows a delta arrows and 4-week history, so we track movement, not just
+            static status.</li>
+    </ul>
+    </p>
+
+    <p><strong>Krish's Goal</strong>: <em>"Unblocking at Scale"</em><br>
+        <strong>What I Did</strong>: Built requested <strong>Watchlist & Interactive Controls</strong>.<br>
+    <ul>
+        <li><em>Why</em>: One click hides "Green" status. New 14/90-day toggles allow Krish to switch from "Daily
+            Firefighting" to "Quarterly Strategy" instantly.</li>
+    </ul>
+    </p>
+
+    <p><strong>Krish's Goal</strong>: <em>"Signal Transparency"</em><br>
+        <strong>What I Did</strong>: Built <strong>Metric Logic Tooltips</strong>.<br>
+    <ul>
+        <li><em>Why</em>: Hovering over any metric (like "Health Score" or "Slippage") now shows the exact math,
+            removing the "black box" feel from the algorithms.</li>
+    </ul>
+    </p>
+
+    <p><strong>Krish's Goal</strong>: <em>"One Source of Truth"</em><br>
+        <strong>What I Did</strong>: Built a <strong>Visual Layer on Notion</strong>.<br>
+    <ul>
+        <li><em>Why</em>: Zero new tools. Zero new forms. We respect Greg's existing data structure.</li>
+    </ul>
+    </p>
+
+    <hr>
+
+    <h2>3. Feature-by-Feature Walkthrough (Stranger-Friendly)</h2>
+
+    <p>This section breaks down every view for someone who has <strong>never seen the dashboard before</strong>,
+        explaining exactly what they are looking at, where the data comes from, and why it matters. Note: The image
+        paths below point to local files on your machine. When viewing this HTML file locally, they should render
+        correctly.</p>
+
+    <h3>A. The Company Pulse (Company View)</h3>
+
+    <p>This is the "10-second health check" for the CEO and leadership.</p>
+
+    <img src="file:///Users/michaelglennbaybay/.gemini/antigravity/brain/355c04c5-bac5-4305-ab5a-4ba20b9d60e6/company_view_light_1771183818900.png"
+        alt="Company View Light Mode">
+
+    <h4>1. Execution Trend (Interactive Area Chart)</h4>
+    <ul>
+        <li><strong>What</strong>: A visualization of output with <strong>14/30/90-day toggles</strong> and
+            <strong>Daily/Weekly granularity</strong>.
+        </li>
+        <li><strong>Where</strong>: Pulled from the <code>Last Updated</code> and <code>Status</code> timestamps in
+            Notion.</li>
+        <li><strong>Why</strong>: To answer, <em>"Are we accelerating or slowing down?"</em> Now supports
+            <strong>Horizontal Scrolling</strong>, allowing high-density data review without breaking the mobile/desktop
+            layout.
+        </li>
+    </ul>
+
+    <h4>2. The Health Score & Logic Tooltips</h4>
+    <ul>
+        <li><strong>What</strong>: An algorithmic score (0-100) with a <strong>hover-to-see-logic tooltip</strong>.</li>
+        <li><strong>Where</strong>: Calculated in real-time based on overdue items, slippage rate, and update recency.
+        </li>
+        <li><strong>Why</strong>: To provide <strong>Transparency</strong>. Leadership can now see exactly why a score
+            is "Amber" vs "Red" by hovering over the metric.</li>
+    </ul>
+
+    <hr>
+
+    <h3>B. The Intelligence Console (Individual View)</h3>
+
+    <p>This is the high-density cockpit for Operations, HR, and Team Leads.</p>
+
+    <img src="file:///Users/michaelglennbaybay/.gemini/antigravity/brain/355c04c5-bac5-4305-ab5a-4ba20b9d60e6/individual_view_light_1771183810279.png"
+        alt="Individual View Light Mode">
+
+    <h4>3. Velocity Sparklines (The Mini Charts)</h4>
+    <ul>
+        <li><strong>What</strong>: A small bar chart next to every person's name showing their output over the last 4
+            weeks.</li>
+        <li><strong>Where</strong>: Aggregated from tasks marked <code>Done</code> in Notion, grouped by week.</li>
+        <li><strong>Why</strong>: To detect <strong>burnout or disengagement</strong>. If a "Top Performer" suddenly has
+            3 empty bars, HR knows to check in <em>before</em> the quarterly review.</li>
+    </ul>
+
+    <h4>4. The "Stale" Signal (The Clock Icon)</h4>
+    <ul>
+        <li><strong>What</strong>: A visual alert for any goal that hasn't been updated in >5 days.</li>
+        <li><strong>Where</strong>: Derived from the <code>Last Edited Time</code> property in Notion.</li>
+        <li><strong>Why</strong>: <strong>"Quiet Quitting" Detection.</strong> Fast-moving teams shouldn't have dormant
+            tasks. This highlights where work is stuck simply because no one is looking at it.</li>
+    </ul>
+
+    <h4>5. Watchlist Filtering (The Toggle)</h4>
+    <ul>
+        <li><strong>What</strong>: A button that hides everyone with a "Green" status.</li>
+        <li><strong>Why</strong>: To focus leadership attention only on exceptions. We don't need to micromanage healthy
+            work; we need to unblock stuck work.</li>
+    </ul>
+
+    <hr>
+
+    <h3>C. The Squad Rollup (Squads View)</h3>
+
+    <p>This view answers: <em>"Which team is struggling?"</em></p>
+
+    <img src="file:///Users/michaelglennbaybay/.gemini/antigravity/brain/355c04c5-bac5-4305-ab5a-4ba20b9d60e6/squad_view_light_1771183814535.png"
+        alt="Squad View Light Mode">
+
+    <h4>6. Ownership Clarity %</h4>
+    <ul>
+        <li><strong>What</strong>: The percentage of a squad's goals that are assigned to a specific person vs.
+            "Unassigned."</li>
+        <li><strong>Where</strong>: Calculated by checking the <code>Owner</code> property in Notion for every active
+            task.</li>
+        <li><strong>Why</strong>: To enforce the <strong>"Direct Responsible Individual" (DRI)</strong> model. If
+            clarity is below 80%, the squad has too much ambiguous work.</li>
+    </ul>
+
+    <hr>
+
+    <h3>D. The Executive Scan (Krish Mode)</h3>
+
+    <p>A stripped-down view for the 10-minute daily review.
+        Note: Screenshot updated with verified fix.</p>
+
+    <img src="file:///Users/michaelglennbaybay/.gemini/antigravity/brain/355c04c5-bac5-4305-ab5a-4ba20b9d60e6/executive_view_light_1771183823045.png"
+        alt="Executive View Light Mode">
+
+    <h4>7. Top 5 Risks</h4>
+    <ul>
+        <li><strong>What</strong>: The 5 most critical items in the company (High Priority + Overdue/Blocked).</li>
+        <li><strong>Why</strong>: To give the CEO a prioritized "hit list" for unblocking.</li>
+    </ul>
+
+    <hr>
+
+    <h2>4. Why the Team Will Love It (The "WIIFM")</h2>
+
+    <p>To win over the <strong>Ops and HR teams</strong>, emphasize these "Quality of Life" improvements:</p>
+
+    <ul>
+        <li><strong>Performance Reviews in 5 Minutes</strong>: No more chasing people for status updates. The "Done
+            Recently" section in the owner panel provides a ready-made list of accomplishments.</li>
+        <li><strong>Automated Recognition</strong>: Proactively identify top performers who are consistently hitting
+            high velocity, ensuring they get the "Recognition" Krish mentioned.</li>
+        <li><strong>Zero Double-Entry</strong>: If the team updates Notion, the dashboard is already done. There is no
+            "extra work" for the individual contributor.</li>
+    </ul>
+
+    <hr>
+
+    <h2>5. The Roadmap (Goal #10 Integration)</h2>
+
+    <p><strong>Krish's Goal</strong>: <em>"Aggregate what already exists... GitHub, Shortcut, Slack engagement."</em>
+    </p>
+
+    <p><strong>The Future</strong>:</p>
+    <ul>
+        <li><strong>Phase 4</strong>: Integrating <strong>GitHub PR data</strong> to automatically populate velocity
+            without manual Notion entry.</li>
+        <li><strong>Phase 5</strong>: <strong>Slack/Matter Sentiment Scans</strong> to flag "Motivation issues" before
+            they lead to degraded performance.</li>
+    </ul>
+
+</body>
+
+</html>
