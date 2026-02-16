@@ -1187,7 +1187,7 @@ h4 {
 
 .grid-header {
   display: grid;
-  grid-template-columns: 2fr repeat(5, 1fr) 1.5fr;
+  grid-template-columns: 1.8fr repeat(5, 1fr) 0.8fr;
   padding: 12px 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
@@ -1200,7 +1200,7 @@ h4 {
 
 .grid-row {
   display: grid;
-  grid-template-columns: 2fr repeat(5, 1fr) 1.5fr;
+  grid-template-columns: 1.8fr repeat(5, 1fr) 0.8fr;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border-secondary);
   align-items: center;
@@ -1485,4 +1485,65 @@ html {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: var(--space-lg);
+}
+
+/* ─── Portal Tooltip ───────────────────────────────── */
+.portal-tooltip {
+  background-color: var(--bg-inverse, #1F2937);
+  color: var(--text-inverse, #F9FAFB);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: normal;
+  width: max-content;
+  max-width: 250px;
+  box-shadow: var(--shadow-xl);
+  pointer-events: none;
+  border: 1px solid var(--border-primary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  /* Spacing from pointer */
+}
+
+.portal-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--bg-inverse, #1F2937) transparent transparent transparent;
+}
+/* ─── Fred Toggle Animation ────────────────────────── */
+.fred-toggle {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fred-toggle img {
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fred-toggle:hover img {
+  transform: scale(1.15) rotate(5deg) translateY(-2px);
+}
+
+.fred-toggle.active img {
+  animation: fred-float 3s ease-in-out infinite;
+}
+
+@keyframes fred-float {
+  0%, 100% {
+    transform: translateY(0) scale(1.1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.15) rotate(-2deg);
+  }
+}
+
+/* Hydration Fix */
+.antigravity-scroll-lock {
+  overflow: hidden !important;
 }

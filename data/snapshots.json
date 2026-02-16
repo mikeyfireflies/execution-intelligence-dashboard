@@ -209,7 +209,7 @@
   },
   {
     "date": "2026-02-16",
-    "timestamp": "2026-02-16T08:37:34.340Z",
+    "timestamp": "2026-02-16T14:08:58.858Z",
     "company": {
       "completed": 5,
       "overdue": 7,
@@ -218,6 +218,21 @@
       "healthScore": 60,
       "healthStatus": "amber",
       "slippageRate": 28,
+      "completionRate": 19,
+      "totalPlanned": 26
+    }
+  },
+  {
+    "date": "2026-02-17",
+    "timestamp": "2026-02-16T22:59:51.413Z",
+    "company": {
+      "completed": 5,
+      "overdue": 9,
+      "blocked": 3,
+      "active": 14,
+      "healthScore": 57,
+      "healthStatus": "amber",
+      "slippageRate": 36,
       "completionRate": 19,
       "totalPlanned": 26
     }

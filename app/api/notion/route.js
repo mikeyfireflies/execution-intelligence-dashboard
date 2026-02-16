@@ -1,12 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchAllGoals, getDatabaseSchema } from '@/lib/notion';
-import {
-    computeIndividualMetrics,
-    computeSquadMetrics,
-    computeCompanyMetrics,
-    computeExecutiveMetrics,
-} from '@/lib/computations';
-import { takeSnapshot, getSnapshots, computeTrends } from '@/lib/snapshots';
+import { getDashboardData, getDatabaseSchema } from '@/lib/notion';
 
 let cachedData = null;
 let cacheTimestamp = 0;
@@ -18,29 +11,7 @@ async function getData() {
         return cachedData;
     }
 
-    const goals = await fetchAllGoals();
-    const individualMetrics = computeIndividualMetrics(goals);
-    const squadMetrics = computeSquadMetrics(goals);
-    const companyMetrics = computeCompanyMetrics(goals);
-    const executiveMetrics = computeExecutiveMetrics(goals);
-
-    // Take a snapshot (await to ensure it finishes in serverless env)
-    await takeSnapshot(companyMetrics, individualMetrics, squadMetrics);
-
-    // Get historical snapshots for trends
-    const snapshots = await getSnapshots(30);
-    const trends = computeTrends(snapshots);
-
-    cachedData = {
-        goals,
-        individual: individualMetrics,
-        squads: squadMetrics,
-        company: companyMetrics,
-        executive: executiveMetrics,
-        trends,
-        snapshots,
-        lastFetched: new Date().toISOString(),
-    };
+    cachedData = await getDashboardData();
     cacheTimestamp = now;
 
     return cachedData;
