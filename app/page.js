@@ -270,7 +270,7 @@ function SquadGrid({ squads, onDrillDown }) {
           className="grid-row clickable-row"
           style={{ cursor: 'pointer' }}
           onClick={() => {
-            if (onDrillDown) onDrillDown(name);
+            if (onDrillDown) onDrillDown('squad', name);
           }}
         >
           <div className="grid-cell" style={{ gap: '12px', justifyContent: 'flex-start' }}>
@@ -1559,7 +1559,7 @@ export default function Dashboard() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <div className="sidebar-logo-icon">F</div>
+            <img src="/fireflies.webp" alt="Fireflies.ai" style={{ height: '32px', width: 'auto' }} />
             <div>
               <div className="sidebar-logo-text">Fireflies.ai</div>
               <div className="sidebar-logo-subtitle">Execution Intelligence</div>
@@ -1657,7 +1657,7 @@ export default function Dashboard() {
       <main className="main-content">
         <header className="page-header">
           <div className="page-header-left">
-            <button className="btn btn-ghost btn-icon" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: 'none', marginRight: '8px' }}>
+            <button className="btn btn-ghost btn-icon mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
               ☰
             </button>
             <h1 className="page-title">{viewConfig[view]?.title}</h1>

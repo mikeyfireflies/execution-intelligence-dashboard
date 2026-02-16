@@ -1405,3 +1405,42 @@ html {
   visibility: visible;
   opacity: 1;
 }
+
+/* ─── Mobile Responsiveness ────────────────────────── */
+
+.mobile-menu-btn {
+  display: none;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .page-header {
+    padding: var(--space-md);
+  }
+  
+  .page-title {
+    font-size: 1.125rem;
+  }
+}
+
+/* Fix overlay issues */
+.recharts-wrapper {
+  max-width: 100%;
+}
