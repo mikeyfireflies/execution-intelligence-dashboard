@@ -1231,9 +1231,44 @@ h4 {
   }
 
   .grid-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 12px;
+  }
+
+  .grid-cell {
+    display: flex;
+    justify-content: space-between !important;
+    width: 100%;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-secondary);
+  }
+
+  .grid-cell:last-child {
+    border-bottom: none;
+  }
+
+  /* Label for mobile */
+  .grid-cell::before {
+    content: attr(data-label);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  /* Main Cell (Name/Avatar) styling */
+  .grid-cell[data-label="Team Member"],
+  .grid-cell[data-label="Squad Name"] {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: 4px;
+  }
+
+  .grid-cell[data-label="Team Member"]::before,
+  .grid-cell[data-label="Squad Name"]::before {
+    display: none;
+    /* No label for the name row */
   }
 }
 

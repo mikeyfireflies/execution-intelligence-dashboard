@@ -273,7 +273,7 @@ function SquadGrid({ squads, onDrillDown }) {
             if (onDrillDown) onDrillDown('squad', name);
           }}
         >
-          <div className="grid-cell" style={{ gap: '12px', justifyContent: 'flex-start' }}>
+          <div className="grid-cell" data-label="Squad Name" style={{ gap: '12px', justifyContent: 'flex-start' }}>
             <div
               style={{
                 width: '32px', height: '32px', borderRadius: '50%',
@@ -289,22 +289,22 @@ function SquadGrid({ squads, onDrillDown }) {
               <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>{data.totalGoals} goals</div>
             </div>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Active" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: 'var(--status-active)' }}>{data.active}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Done" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: 'var(--signal-green)' }}>{data.completed}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Overdue" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: data.overdue > 0 ? 'var(--signal-red)' : 'inherit' }}>{data.overdue}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Blocked" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: data.blocked > 0 ? 'var(--signal-amber)' : 'inherit' }}>{data.blocked}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Risk" style={{ justifyContent: 'center' }}>
             <RiskBadge level={data.riskLevel} compact />
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'flex-end' }}>
+          <div className="grid-cell" data-label="Velocity" style={{ justifyContent: 'flex-end' }}>
             <SparkLine
               data={[
                 { value: Math.max(2, data.completed * 0.5) },
@@ -529,7 +529,7 @@ function OwnerGrid({ owners, onRowClick }) {
           onClick={() => onRowClick && onRowClick(owner, data)}
           style={{ cursor: 'pointer' }}
         >
-          <div className="grid-cell" style={{ gap: '12px', justifyContent: 'flex-start' }}>
+          <div className="grid-cell" data-label="Team Member" style={{ gap: '12px', justifyContent: 'flex-start' }}>
             <div
               style={{
                 width: '32px', height: '32px', borderRadius: '50%',
@@ -557,22 +557,22 @@ function OwnerGrid({ owners, onRowClick }) {
               </div>
             </div>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Active" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: 'var(--status-active)' }}>{data.active}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Done" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: 'var(--signal-green)' }}>{data.completed}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Overdue" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: data.overdue > 0 ? 'var(--signal-red)' : 'inherit' }}>{data.overdue}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Blocked" style={{ justifyContent: 'center' }}>
             <span className="grid-cell-value" style={{ color: data.blocked > 0 ? 'var(--signal-amber)' : 'inherit' }}>{data.blocked}</span>
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'center' }}>
+          <div className="grid-cell" data-label="Risk" style={{ justifyContent: 'center' }}>
             <RiskBadge level={data.riskLevel} compact />
           </div>
-          <div className="grid-cell" style={{ justifyContent: 'flex-end' }}>
+          <div className="grid-cell" data-label="Velocity" style={{ justifyContent: 'flex-end' }}>
             <SparkLine
               data={[
                 { value: Math.max(1, data.completed * 0.3) },
