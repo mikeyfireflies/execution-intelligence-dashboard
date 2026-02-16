@@ -1090,7 +1090,7 @@ function CompanyView({ data, trends, snapshots, onDrillDown }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: 'var(--space-lg)', marginBottom: 'var(--space-lg)' }}>
+      <div className="charts-grid" style={{ marginBottom: 'var(--space-lg)' }}>
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-md)' }}>
             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1558,11 +1558,12 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">
-            <img src="/fireflies.webp" alt="Fireflies.ai" style={{ height: '32px', width: 'auto' }} />
-            <div>
-              <div className="sidebar-logo-text">Fireflies.ai</div>
-              <div className="sidebar-logo-subtitle">Execution Intelligence</div>
+          <div className="sidebar-logo" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+            <img src="/fireflies.webp" alt="Fireflies.ai" style={{ height: '28px', width: 'auto' }} />
+            <div className="sidebar-logo-subtitle" style={{ fontSize: '0.625rem', lineHeight: '1.2' }}>
+              Execution Intelligence
+              <br />
+              (Team Accountability Dashboard)
             </div>
           </div>
         </div>

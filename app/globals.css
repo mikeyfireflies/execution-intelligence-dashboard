@@ -1430,17 +1430,24 @@ html {
   .mobile-menu-btn {
     display: flex;
   }
-  
+
   .page-header {
     padding: var(--space-md);
   }
-  
+
   .page-title {
     font-size: 1.125rem;
   }
+
+  /* Stack charts on mobile */
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
-/* Fix overlay issues */
-.recharts-wrapper {
-  max-width: 100%;
+/* ─── Charts Grid ──────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--space-lg);
 }
