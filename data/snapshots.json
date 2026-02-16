@@ -209,106 +209,17 @@
   },
   {
     "date": "2026-02-16",
-    "timestamp": "2026-02-16T07:20:43.989Z",
+    "timestamp": "2026-02-16T08:37:34.340Z",
     "company": {
       "completed": 5,
       "overdue": 7,
       "blocked": 3,
       "active": 14,
-      "healthScore": 59,
+      "healthScore": 60,
       "healthStatus": "amber",
       "slippageRate": 28,
-      "completionRate": 20,
-      "totalPlanned": 25
-    },
-    "owners": {
-      "Mikey Glenn": {
-        "completed": 1,
-        "active": 8,
-        "overdue": 5,
-        "blocked": 0,
-        "totalGoals": 12,
-        "effortInProgress": "023133231",
-        "riskLevel": "red"
-      },
-      "Berna": {
-        "completed": 0,
-        "active": 2,
-        "overdue": 0,
-        "blocked": 0,
-        "totalGoals": 2,
-        "effortInProgress": "024",
-        "riskLevel": "green"
-      },
-      "Greg Docter": {
-        "completed": 4,
-        "active": 2,
-        "overdue": 0,
-        "blocked": 3,
-        "totalGoals": 9,
-        "effortInProgress": "014233",
-        "riskLevel": "amber"
-      },
-      "Hrigved": {
-        "completed": 0,
-        "active": 1,
-        "overdue": 1,
-        "blocked": 0,
-        "totalGoals": 1,
-        "effortInProgress": "05",
-        "riskLevel": "red"
-      },
-      "ASR": {
-        "completed": 0,
-        "active": 1,
-        "overdue": 1,
-        "blocked": 0,
-        "totalGoals": 1,
-        "effortInProgress": "04",
-        "riskLevel": "green"
-      }
-    },
-    "squads": {
-      "Tier 3 — Exploratory": {
-        "completed": 0,
-        "active": 2,
-        "overdue": 1,
-        "blocked": 0,
-        "totalGoals": 2,
-        "riskLevel": "green"
-      },
-      "Tier 2 — High Leverage": {
-        "completed": 0,
-        "active": 2,
-        "overdue": 1,
-        "blocked": 0,
-        "totalGoals": 2,
-        "riskLevel": "green"
-      },
-      "Fred on Web + Team Accountability Dashboard (Q1 2026)": {
-        "completed": 4,
-        "active": 2,
-        "overdue": 0,
-        "blocked": 3,
-        "totalGoals": 9,
-        "riskLevel": "amber"
-      },
-      "Tier 1 — Non-Negotiable": {
-        "completed": 1,
-        "active": 2,
-        "overdue": 1,
-        "blocked": 0,
-        "totalGoals": 3,
-        "riskLevel": "red"
-      },
-      "Automation & Slack Triage Layer (Hrigved 1:1)": {
-        "completed": 0,
-        "active": 6,
-        "overdue": 4,
-        "blocked": 0,
-        "totalGoals": 9,
-        "riskLevel": "red"
-      }
+      "completionRate": 19,
+      "totalPlanned": 26
     }
   }
 ]

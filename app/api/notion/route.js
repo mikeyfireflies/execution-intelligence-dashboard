@@ -24,11 +24,11 @@ async function getData() {
     const companyMetrics = computeCompanyMetrics(goals);
     const executiveMetrics = computeExecutiveMetrics(goals);
 
-    // Take a snapshot
-    takeSnapshot(companyMetrics, individualMetrics, squadMetrics);
+    // Take a snapshot (await to ensure it finishes in serverless env)
+    await takeSnapshot(companyMetrics, individualMetrics, squadMetrics);
 
     // Get historical snapshots for trends
-    const snapshots = getSnapshots(30);
+    const snapshots = await getSnapshots(30);
     const trends = computeTrends(snapshots);
 
     cachedData = {
