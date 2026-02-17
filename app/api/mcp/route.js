@@ -56,7 +56,22 @@ export async function POST(req) {
 
     const transport = transports.get(sessionId);
     if (!transport) {
-        return new Response("Session not found", { status: 404 });
+        // Fallback: If session not found, it might be a different Lambda instance.
+        // For stateless requests like tools/list, we can attempt a one-off response.
+        try {
+            const message = await req.json();
+            if (message.method === 'tools/list') {
+                const server = createMCPServer();
+                const result = await server.listTools();
+                return new Response(JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: message.id,
+                    result: result
+                }), { status: 200, headers: { "Content-Type": "application/json" } });
+            }
+        } catch (e) { }
+
+        return new Response("Session not found on this instance. Please reconnect the connector.", { status: 404 });
     }
 
     try {
