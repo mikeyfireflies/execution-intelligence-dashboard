@@ -146,6 +146,7 @@ export default function DashboardClient({ children }) {
             devMode={devMode}
             setDevMode={setDevMode}
             viewConfig={viewConfig}
+            data={displayData}
         >
             {error && (
                 <div className="error-state">

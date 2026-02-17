@@ -7,9 +7,11 @@ import {
     AlertTriangle, X
 } from 'lucide-react';
 import Link from 'next/link';
+import FredChat from './FredChat';
 
-export default function DashboardLayout({ children, loading, lastFetched, fetchData, theme, toggleTheme, autoRefresh, setAutoRefresh, devMode, setDevMode, viewConfig }) {
+export default function DashboardLayout({ children, loading, lastFetched, fetchData, theme, toggleTheme, autoRefresh, setAutoRefresh, devMode, setDevMode, viewConfig, data }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [fredOpen, setFredOpen] = useState(false);
     const pathname = usePathname();
     const currentView = pathname.split('/').pop() || 'individual';
 
@@ -22,6 +24,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
 
     return (
         <div className="app-layout">
+            <FredChat isOpen={fredOpen} onClose={() => setFredOpen(false)} data={data} />
             {/* Sidebar */}
             <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
@@ -67,19 +70,19 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                             <div className="live-dot" title={`Last synced: ${new Date(lastFetched).toLocaleTimeString()}`} />
                         )}
                         <div
-                            className={`fred-toggle ${devMode ? 'active' : ''}`}
+                            className={`fred-toggle ${fredOpen ? 'active' : ''}`}
                             style={{
                                 width: '32px', height: '32px', borderRadius: '50%',
-                                background: devMode ? 'var(--brand-primary)' : 'var(--bg-tertiary)',
-                                color: devMode ? 'white' : 'var(--text-secondary)',
+                                background: fredOpen ? 'var(--brand-primary)' : 'var(--bg-tertiary)',
+                                color: fredOpen ? 'white' : 'var(--text-secondary)',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 border: '1px solid var(--border-secondary)',
                                 cursor: 'pointer',
                                 transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                                 overflow: 'hidden'
                             }}
-                            onClick={() => setDevMode(!devMode)}
-                            title="Toggle Dev Console"
+                            onClick={() => setFredOpen(true)}
+                            title="Speak with Fred"
                         >
                             <img
                                 src="/fred-icon.svg"
@@ -88,7 +91,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'contain',
-                                    transform: devMode ? 'scale(1.1)' : 'scale(1)'
+                                    transform: fredOpen ? 'scale(1.1)' : 'scale(1)'
                                 }}
                             />
                         </div>
@@ -106,7 +109,23 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         <h1 className="page-title">{viewConfig[currentView]?.title || 'Dashboard'}</h1>
                         <p className="page-subtitle">{viewConfig[currentView]?.subtitle || 'Execution Intelligence'}</p>
                     </div>
-                    <div className="page-header-actions">
+                    <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Link
+                            href="/guide/future.html"
+                            className="fred-vision-link"
+                            title="Fred Pitch Hub & Future Vision"
+                            style={{
+                                width: '32px', height: '32px', borderRadius: '50%',
+                                background: 'var(--brand-primary)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 0 15px rgba(124, 58, 237, 0.3)',
+                                overflow: 'hidden',
+                                border: '1px solid rgba(255,255,255,0.1)'
+                            }}
+                        >
+                            <img src="/fred-3d-3.svg" alt="Fred Vision" style={{ width: '140%', height: '140%', objectFit: 'cover', objectPosition: 'center top', marginTop: '10%' }} />
+                        </Link>
                         {lastFetched && (
                             <div className="last-fetched" style={{ marginRight: '8px' }}>
                                 <div className="live-dot" />
