@@ -132,6 +132,20 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         <p className="page-subtitle">{viewConfig[currentView]?.subtitle || 'Execution Intelligence'}</p>
                     </div>
                     <div className="page-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                        {lastFetched && (
+                            <div className="last-fetched" style={{ marginRight: '8px' }}>
+                                <div className="live-dot" />
+                                {new Date(lastFetched).toLocaleTimeString()}
+                            </div>
+                        )}
+                        <button className="btn btn-sm" onClick={() => fetchData(true)} disabled={loading}>
+                            <RefreshCw size={14} className={loading ? 'loading-pulse' : ''} />
+                            {loading ? 'Syncing...' : 'Refresh'}
+                        </button>
+                        <button className="btn btn-icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                        </button>
                         <Link
                             href="/guide/future.html"
                             className="fred-vision-link"
@@ -148,19 +162,6 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         >
                             <img src="/fred-3d-3.svg" alt="Fred Vision" style={{ width: '140%', height: '140%', objectFit: 'cover', objectPosition: 'center top', marginTop: '10%' }} />
                         </Link>
-                        {lastFetched && (
-                            <div className="last-fetched" style={{ marginRight: '8px' }}>
-                                <div className="live-dot" />
-                                {new Date(lastFetched).toLocaleTimeString()}
-                            </div>
-                        )}
-                        <button className="btn btn-sm" onClick={() => fetchData(true)} disabled={loading}>
-                            <RefreshCw size={14} className={loading ? 'loading-pulse' : ''} />
-                            {loading ? 'Syncing...' : 'Refresh'}
-                        </button>
-                        <button className="btn btn-icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-                        </button>
                     </div>
                 </header>
 
