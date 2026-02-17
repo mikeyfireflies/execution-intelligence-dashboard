@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export function middleware(req) {
+export function proxy(req) {
     // Only run in production or when env vars are set
     const basicAuthUser = process.env.BASIC_AUTH_USER;
     const basicAuthPassword = process.env.BASIC_AUTH_PASSWORD;

@@ -155,9 +155,12 @@ export function SquadGrid({ squads, onDrillDown }) {
 // ─── Squad Section Component ───────────────────────
 export function SquadSection({ name, owners, onOwnerClick }) {
     const [isOpen, setIsOpen] = useState(true);
-    const totalOverdue = owners.reduce((s, [, o]) => s + o.overdue, 0);
-    const totalBlocked = owners.reduce((s, [, o]) => s + o.blocked, 0);
-    const atRisk = owners.filter(([, o]) => o.riskLevel !== 'green').length;
+
+    const stats = useMemo(() => ({
+        totalOverdue: owners.reduce((s, [, o]) => s + o.overdue, 0),
+        totalBlocked: owners.reduce((s, [, o]) => s + o.blocked, 0),
+        atRisk: owners.filter(([, o]) => o.riskLevel !== 'green').length
+    }), [owners]);
 
     return (
         <div style={{ marginBottom: 'var(--space-md)' }}>
@@ -190,9 +193,9 @@ export function SquadSection({ name, owners, onOwnerClick }) {
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{owners.length} members</span>
                 </div>
                 <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem' }}>
-                    {totalOverdue > 0 && <span style={{ color: 'var(--signal-red)', fontWeight: 600 }}>{totalOverdue} Overdue</span>}
-                    {totalBlocked > 0 && <span style={{ color: 'var(--signal-amber)', fontWeight: 600 }}>{totalBlocked} Blocked</span>}
-                    {atRisk > 0 && <span className="badge badge-red" style={{ scale: '0.9', margin: 0 }}>{atRisk} at risk</span>}
+                    {stats.totalOverdue > 0 && <span style={{ color: 'var(--signal-red)', fontWeight: 600 }}>{stats.totalOverdue} Overdue</span>}
+                    {stats.totalBlocked > 0 && <span style={{ color: 'var(--signal-amber)', fontWeight: 600 }}>{stats.totalBlocked} Blocked</span>}
+                    {stats.atRisk > 0 && <span className="badge badge-red" style={{ scale: '0.9', margin: 0 }}>{stats.atRisk} at risk</span>}
                 </div>
             </div>
             {isOpen && (

@@ -162,28 +162,30 @@ export function MiniDonut({ breakdown, size = 80 }) {
 
 // ─── Sparkline Component ─────────────────────────────
 export function SparkLine({ data, color }) {
-    if (!data || data.length === 0) return <div style={{ height: '24px', width: '100%', background: 'var(--bg-tertiary)', opacity: 0.3, borderRadius: '2px' }} />;
+    if (!data || data.length === 0) return <div style={{ height: '24px', width: '60px', background: 'var(--bg-tertiary)', opacity: 0.3, borderRadius: '2px' }} />;
+
+    const max = Math.max(...data.map(d => d.value), 1);
+    const width = 60;
+    const height = 24;
+    const barWidth = width / data.length - 2;
 
     return (
-        <div style={{ width: '60px', height: '24px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={data}>
-                    <RechartsTooltip
-                        cursor={{ fill: 'var(--bg-tertiary)' }}
-                        contentStyle={{
-                            background: 'var(--bg-elevated)',
-                            border: '1px solid var(--border-primary)',
-                            borderRadius: '4px',
-                            fontSize: '10px',
-                            padding: '4px 8px'
+        <div style={{ width, height, display: 'flex', alignItems: 'flex-end', gap: '2px' }} title={`Trend: ${data.map(d => d.value).join(' → ')}`}>
+            {data.map((d, i) => {
+                const barHeight = (d.value / max) * height;
+                return (
+                    <div
+                        key={i}
+                        style={{
+                            width: barWidth,
+                            height: Math.max(barHeight, 2),
+                            background: color,
+                            borderRadius: '1px',
+                            opacity: 0.5 + (i / data.length) * 0.5
                         }}
-                        itemStyle={{ padding: 0 }}
-                        formatter={(value) => [`${value} goals`, '']}
-                        labelStyle={{ display: 'none' }}
                     />
-                    <Bar dataKey="value" fill={color} radius={[2, 2, 0, 0]} />
-                </BarChart>
-            </ResponsiveContainer>
+                );
+            })}
         </div>
     );
 }

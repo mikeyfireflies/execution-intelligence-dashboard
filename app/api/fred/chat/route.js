@@ -1,82 +1,120 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getDashboardData } from "@/lib/notion";
+
+// Tool declarations for Gemini
+const tools = [
+    {
+        functionDeclarations: [
+            {
+                name: "get_dashboard_summary",
+                description: "Get high-level company execution metrics (Health Score, Overdue, Blocked, etc.)",
+            },
+            {
+                name: "get_team_performance",
+                description: "Get performance metrics for all individuals including risk levels and task counts",
+            },
+            {
+                name: "get_squad_health",
+                description: "Get health scores and task status for each squad",
+            },
+            {
+                name: "search_goals",
+                description: "Search for specific goals in the execution database",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        query: { type: "STRING", description: "Search term for goal title or owner" },
+                    },
+                    required: ["query"],
+                },
+            },
+        ],
+    },
+];
 
 export async function POST(req) {
     try {
-        const { messages, dashboardData } = await req.json();
-
+        const { messages } = await req.json();
         const apiKey = process.env.GOOGLE_API_KEY;
+
         if (!apiKey) {
             return Response.json({ content: "I'm ready to help, but I need a 'GOOGLE_API_KEY' in the environment to start talking! Please add it to your .env.local file." }, { status: 200 });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            tools: tools,
+            systemInstruction: `You are Fred, the official Fireflies.AI Execution Intelligence Assistant.
+You are embedded directly within the Execution Dashboard.
 
-        // Build a concise system prompt with dashboard context
-        const dashboardContext = summarizeDashboard(dashboardData);
-        const systemPrompt = `You are Fred, the Fireflies.AI Execution Intelligence Assistant. 
-You live in the dashboard and help leadership understand performance data.
-You have access to the following live dashboard context:
-${JSON.stringify(dashboardContext, null, 2)}
+Key Knowledge:
+- The dashboard is deployed at: https://execution-intelligence-dashboard.vercel.app/
+- The MCP (Model Context Protocol) endpoint is: https://execution-intelligence-dashboard.vercel.app/api/mcp
+- You HAVE direct tools to fetch dashboard metrics and search Notion database.
+- If users ask about connecting you as an MCP server, you should confirm that the endpoint is /api/mcp and it supports SSE.
+- Be concise, executive, and highly helpful. Do not ask generic questions about the implementation if the information is already in your knowledge.`
+        });
 
-Instructions:
-- Be concise, professional, and slightly proactive.
-- Use the provided context to answer questions about risks, velocity, and health.
-- If data is missing for a specific question, stick to what you can see.
-- Refer to team members by name if they appear in the data.`;
+        const chat = model.startChat({
+            history: messages.slice(0, -1).map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }],
+            })),
+        });
 
-        // Combine system prompt with message history
-        const prompt = `${systemPrompt}\n\nUser: ${messages[messages.length - 1].content}`;
+        const userMessage = messages[messages.length - 1].content;
+        let result = await chat.sendMessage(userMessage);
+        let response = result.response;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        // Handle tool calls iteratively
+        while (response.candidates[0].content.parts.some(part => part.functionCall)) {
+            const toolCalls = response.candidates[0].content.parts.filter(part => part.functionCall);
+            const toolResults = [];
 
-        return Response.json({ content: text });
+            for (const call of toolCalls) {
+                const { name, args } = call.functionCall;
+                console.log(`Chatbot Tool Call: ${name}`, args);
+
+                let toolData;
+                const dashboard = await getDashboardData();
+
+                switch (name) {
+                    case "get_dashboard_summary":
+                        toolData = dashboard.company;
+                        break;
+                    case "get_team_performance":
+                        toolData = dashboard.individual;
+                        break;
+                    case "get_squad_health":
+                        toolData = dashboard.squads;
+                        break;
+                    case "search_goals":
+                        const { query } = args;
+                        toolData = (dashboard.goals || []).filter(g =>
+                            g.goalTitle?.toLowerCase().includes(query?.toLowerCase()) ||
+                            g.owner?.toLowerCase().includes(query?.toLowerCase())
+                        ).slice(0, 5);
+                        break;
+                    default:
+                        toolData = { error: "Unknown tool" };
+                }
+
+                toolResults.push({
+                    functionResponse: {
+                        name,
+                        response: { content: toolData },
+                    },
+                });
+            }
+
+            result = await chat.sendMessage(toolResults);
+            response = result.response;
+        }
+
+        return Response.json({ content: response.text() });
     } catch (error) {
         console.error("Fred Chat Error:", error);
-        return Response.json({ error: "Failed to process chat" }, { status: 500 });
+        return Response.json({ error: "Failed to process chat: " + error.message }, { status: 500 });
     }
-}
-
-function summarizeDashboard(data) {
-    if (!data) return "No data currently available.";
-
-    // Simplify the massive data object for the LLM context window
-    const summary = {
-        view: data.view || "Current View",
-        summaryMetrics: {}
-    };
-
-    if (data.company) {
-        summary.summaryMetrics = {
-            healthScore: data.company.healthScore,
-            totalPlanned: data.company.totalPlanned,
-            overdue: data.company.overdue,
-            blocked: data.company.blocked,
-            slippageRate: data.company.slippageRate
-        };
-    }
-
-    if (data.individual) {
-        summary.individualPerformance = Object.entries(data.individual).map(([name, profile]) => ({
-            name,
-            active: profile.active,
-            overdue: profile.overdue,
-            blocked: profile.blocked,
-            risk: profile.riskLevel,
-            squad: profile.squad
-        })).slice(0, 15); // Limit to top 15 to save tokens
-    }
-
-    if (data.squads) {
-        summary.squadHealth = Object.entries(data.squads).map(([name, squad]) => ({
-            name,
-            health: squad.healthScore,
-            overdue: squad.overdue,
-            blocked: squad.blocked
-        }));
-    }
-
-    return summary;
 }
