@@ -62,7 +62,12 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         <div className={`toggle ${autoRefresh ? 'active' : ''}`}>
                             <div className="toggle-knob" />
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Auto refresh</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            Auto refresh
+                            {autoRefresh && (
+                                <img src="/fred-icon.svg" alt="" style={{ width: '14px', height: '14px' }} className="animate-spin-slow" />
+                            )}
+                        </span>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -70,7 +75,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                             <div className="live-dot" title={`Last synced: ${new Date(lastFetched).toLocaleTimeString()}`} />
                         )}
                         <div
-                            className={`fred-toggle ${fredOpen ? 'active' : ''}`}
+                            className={`fred-toggle ${fredOpen ? 'active' : 'animate-float'}`}
                             style={{
                                 width: '32px', height: '32px', borderRadius: '50%',
                                 background: fredOpen ? 'var(--brand-primary)' : 'var(--bg-tertiary)',
@@ -79,7 +84,8 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                                 border: '1px solid var(--border-secondary)',
                                 cursor: 'pointer',
                                 transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                boxShadow: fredOpen ? '0 0 0 2px var(--brand-primary)' : 'none'
                             }}
                             onClick={() => setFredOpen(true)}
                             title="Speak with Fred"
@@ -97,10 +103,26 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         </div>
                     </div>
                 </div>
+
+                {/* Dev Mode Secret Toggle */}
+                <div
+                    onClick={() => setDevMode(!devMode)}
+                    style={{
+                        position: 'absolute',
+                        bottom: '16px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '20px',
+                        height: '20px',
+                        opacity: 0.1,
+                        cursor: 'pointer'
+                    }}
+                    title="Toggle Dev Mode"
+                />
             </aside>
 
             {/* Main Content */}
-            <main className="main-content">
+            < main className="main-content" >
                 <header className="page-header">
                     <div className="page-header-left">
                         <button className="btn btn-ghost btn-icon mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -145,25 +167,27 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                 {children}
 
                 {/* Dev Console Overlay */}
-                {devMode && (
-                    <div style={{
-                        position: 'fixed', bottom: '20px', right: '20px',
-                        width: '300px', background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)',
-                        borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 2000,
-                        padding: '16px', fontSize: '0.75rem', fontFamily: 'monospace'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-secondary)', paddingBottom: '8px', marginBottom: '8px' }}>
-                            <strong style={{ color: 'var(--brand-primary)' }}>DEV CONSOLE</strong>
-                            <X size={14} style={{ cursor: 'pointer' }} onClick={() => setDevMode(false)} />
+                {
+                    devMode && (
+                        <div style={{
+                            position: 'fixed', bottom: '20px', right: '20px',
+                            width: '300px', background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)',
+                            borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', zIndex: 2000,
+                            padding: '16px', fontSize: '0.75rem', fontFamily: 'monospace'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-secondary)', paddingBottom: '8px', marginBottom: '8px' }}>
+                                <strong style={{ color: 'var(--brand-primary)' }}>DEV CONSOLE</strong>
+                                <X size={14} style={{ cursor: 'pointer' }} onClick={() => setDevMode(false)} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div><strong>View:</strong> {currentView}</div>
+                                <div><strong>Path:</strong> {pathname}</div>
+                                <div><strong>Theme:</strong> {theme}</div>
+                            </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div><strong>View:</strong> {currentView}</div>
-                            <div><strong>Path:</strong> {pathname}</div>
-                            <div><strong>Theme:</strong> {theme}</div>
-                        </div>
-                    </div>
-                )}
-            </main>
-        </div>
+                    )
+                }
+            </main >
+        </div >
     );
 }

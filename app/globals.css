@@ -800,6 +800,57 @@ h4 {
   color: var(--signal-green);
 }
 
+/* ─── Animations ───────────────────────────────────── */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 12s linear infinite;
+}
+
 .health-score-number.amber {
   color: var(--signal-amber);
 }
@@ -1516,6 +1567,7 @@ html {
   border-style: solid;
   border-color: var(--bg-inverse, #1F2937) transparent transparent transparent;
 }
+
 /* ─── Fred Toggle Animation ────────────────────────── */
 .fred-toggle {
   position: relative;
@@ -1535,9 +1587,12 @@ html {
 }
 
 @keyframes fred-float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1.1);
   }
+
   50% {
     transform: translateY(-4px) scale(1.15) rotate(-2deg);
   }

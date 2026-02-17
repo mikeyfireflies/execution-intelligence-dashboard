@@ -56,7 +56,8 @@ export default async function ProfilePage({ params }) {
                                     background: 'var(--bg-tertiary)', overflow: 'hidden',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     fontSize: '3rem', fontWeight: 700, color: 'var(--brand-primary)',
-                                    boxShadow: 'var(--shadow-lg)', border: '4px solid var(--bg-secondary)'
+                                    boxShadow: 'var(--shadow-lg)', border: '4px solid #7c3aed',
+                                    padding: '2px'
                                 }}
                             >
                                 {profile.profileImage ? (

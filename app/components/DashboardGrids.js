@@ -38,10 +38,10 @@ export function OwnerGrid({ owners, onRowClick }) {
                             background: 'var(--bg-tertiary)', color: 'var(--brand-primary)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden',
-                            flexShrink: 0
+                            flexShrink: 0, border: '2px solid #7c3aed', padding: '1px'
                         }}>
                             {data.profileImage ? (
-                                <img src={data.profileImage} alt={owner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={data.profileImage} alt={owner} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                             ) : (
                                 owner.charAt(0)
                             )}
@@ -248,10 +248,10 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                                 width: '32px', height: '32px', borderRadius: '50%',
                                 background: 'var(--brand-primary)', color: 'white',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
-                                overflow: 'hidden'
+                                overflow: 'hidden', border: '1.5px solid #7c3aed', padding: '1px'
                             }}>
                                 {data.profileImage ? (
-                                    <img src={data.profileImage} alt={owner} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={data.profileImage} alt={owner} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
                                 ) : (
                                     owner.charAt(0)
                                 )}
