@@ -5,6 +5,11 @@ export function middleware(req) {
     const basicAuthUser = process.env.BASIC_AUTH_USER;
     const basicAuthPassword = process.env.BASIC_AUTH_PASSWORD;
 
+    // Allow MCP API routes to bypass basic auth
+    if (req.nextUrl.pathname.startsWith('/api/mcp')) {
+        return NextResponse.next();
+    }
+
     if (!basicAuthUser || !basicAuthPassword) {
         return NextResponse.next();
     }
