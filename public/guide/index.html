@@ -193,6 +193,14 @@
                 <td><strong>Visual Layer</strong>: Zero new tools. Transparently sits on top of existing Notion data.
                 </td>
             </tr>
+            <tr>
+                <td><strong>Enterprise Architecture</strong></td>
+                <td><strong>Fireflies Org Integration</strong>: Migrated from personal sandbox to live Fireflies
+                    Notion workspace. Secured with official Integration Tokens. Now fully compatible with
+                    <strong>Runbear
+                        & Web Tracker</strong>.
+                </td>
+            </tr>
         </tbody>
     </table>
 
@@ -373,7 +381,7 @@
 
     <hr>
 
-    <h3>D. The Executive Scan (Krish Mode)</h3>
+    <h3>E. The Executive Scan (Krish Mode)</h3>
 
     <p>A stripped-down view for the 10-minute daily review.</p>
 
@@ -397,6 +405,34 @@
 
     <hr>
 
+    <h3>F. Fred Chat & Intelligence (New!)</h3>
+
+    <p>The AI assistant is no longer just a static icon. It’s fully integrated and configurable.</p>
+
+    <h4>1. BYO-Key Configuration</h4>
+    <ul>
+        <li><strong>What</strong>: A new <strong>Settings Tab</strong> in the chat interface allows users to input their
+            own Google Gemini API Keys.</li>
+        <li><strong>Why</strong>: Removes hardcoded dependencies and allows the team to switch between personal and
+            org-level quotas instantly.</li>
+    </ul>
+
+    <h4>2. Advanced Model Selection</h4>
+    <ul>
+        <li><strong>What</strong>: Support for the latest <strong>Gemini 2.0 Flash</strong> models.</li>
+        <li><strong>Why</strong>: Faster response times and better reasoning for complex "What's blocked?" queries.</li>
+    </ul>
+
+    <h4>3. "Fred is Thinking" State</h4>
+    <ul>
+        <li><strong>What</strong>: A polished UI state showing exactly when Fred is querying Notion vs. generating an
+            answer.</li>
+        <li><strong>Why</strong>: distinct visual feedback builds trust in the AI's latency.</li>
+    </ul>
+
+
+    <hr>
+
     <h2>4. Why the Team Will Love It (The "WIIFM")</h2>
 
     <p>To win over the <strong>Ops and HR teams</strong>, emphasize these "Quality of Life" improvements:</p>
@@ -412,7 +448,50 @@
 
     <hr>
 
-    <h2>5. The Roadmap (Goal #10 Integration)</h2>
+    <h2>6. Deployment & Configuration (Vercel)</h2>
+
+    <p>The dashboard is stateless and deployed on Vercel. To connect it to the live Fireflies Notion data, the following
+        <strong>6 Environment Variables</strong> are required:
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Variable Name</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>NOTION_TOKEN</code></td>
+                <td>The <code>secret_...</code> integration token for the Fireflies workspace.</td>
+            </tr>
+            <tr>
+                <td><code>NOTION_DATABASE_ID</code></td>
+                <td><strong>Runbear & Fred Tracker</strong> ID.</td>
+            </tr>
+            <tr>
+                <td><code>NOTION_SNAPSHOT_DATABASE_ID</code></td>
+                <td><strong>Execution Snapshots</strong> ID.</td>
+            </tr>
+            <tr>
+                <td><code>NOTION_SNAPSHOT_DATA_SOURCE_ID</code></td>
+                <td><strong>Snapshot Source</strong> ID (for data integrity).</td>
+            </tr>
+            <tr>
+                <td><code>NOTION_TEAM_DIRECTORY_DATABASE_ID</code></td>
+                <td><strong>Team Directory</strong> ID.</td>
+            </tr>
+            <tr>
+                <td><code>GOOGLE_API_KEY</code></td>
+                <td>The backend key for Fred Chat (Gemini).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>7. The Roadmap (Goal #10 Integration)</h2>
 
     <p><strong>Krish's Goal</strong>: <em>"Aggregate what already exists... GitHub, Shortcut, Slack engagement."</em>
     </p>
