@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { Building2, Activity, CheckCircle2, Clock, AlertTriangle, AlertCircle } from 'lucide-react';
 import { MetricCard } from './DashboardMetrics';
-import { SquadGrid } from './DashboardGrids';
+import { SquadGrid, SquadDetailPanel } from './DashboardGrids';
 
-export default function SquadView({ data, unfilteredData, onDrillDown, onFilterChange }) {
+export default function SquadView({ data, unfilteredData, onFilterChange, onDrillDownOld }) {
     if (!data) return null;
     const [watchlistOnly, setWatchlistOnly] = useState(false);
+    const [selectedSquad, setSelectedSquad] = useState(null);
+    const [selectedSquadData, setSelectedSquadData] = useState(null);
     const squads = Object.entries(data);
     const allSquadsData = Object.entries(unfilteredData || data);
 
@@ -44,7 +46,29 @@ export default function SquadView({ data, unfilteredData, onDrillDown, onFilterC
                 </button>
             </div>
 
-            <SquadGrid squads={filteredSquads} onDrillDown={onDrillDown} />
+            <SquadGrid
+                squads={filteredSquads}
+                onDrillDown={(type, value) => {
+                    if (type === 'squad') {
+                        const sqData = filteredSquads.find(([n]) => n === value);
+                        if (sqData) {
+                            setSelectedSquad(value);
+                            setSelectedSquadData(sqData[1]);
+                        }
+                    }
+                }}
+            />
+
+            {selectedSquad && (
+                <SquadDetailPanel
+                    squadName={selectedSquad}
+                    data={selectedSquadData}
+                    onClose={() => {
+                        setSelectedSquad(null);
+                        setSelectedSquadData(null);
+                    }}
+                />
+            )}
         </>
     );
 }

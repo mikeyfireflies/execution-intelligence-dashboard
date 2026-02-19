@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Send, Bot, User, Sparkles, History, HelpCircle, Plus, Settings, Key, Check, Eye, EyeOff, Zap, Brain, Cpu } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, History, HelpCircle, Plus, Settings, Key, Check, Eye, EyeOff, Zap, Brain, Cpu, Trash2 } from 'lucide-react';
 
 // Lightweight markdown renderer for Fred's chat messages
 function renderMarkdown(text) {
@@ -90,6 +90,7 @@ export default function FredChat({ isOpen, onClose }) {
     const [apiKeySaved, setApiKeySaved] = useState(false);
     const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
     const [intelligenceMode, setIntelligenceMode] = useState('balanced');
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
 
     const models = [
         { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', provider: 'Google', note: 'Latest · Fast · 1M context' },
@@ -118,7 +119,7 @@ export default function FredChat({ isOpen, onClose }) {
 
     // Save threads when they change
     useEffect(() => {
-        if (typeof window !== 'undefined' && threads.length > 0) {
+        if (typeof window !== 'undefined') {
             localStorage.setItem('fred_chat_threads', JSON.stringify(threads));
         }
     }, [threads]);
@@ -163,6 +164,30 @@ export default function FredChat({ isOpen, onClose }) {
         setCurrentThreadId(thread.id);
         setMessages(thread.messages);
         setActiveTab('chat');
+    };
+
+    const deleteThread = (e, threadId) => {
+        e.stopPropagation();
+        setThreads(prev => {
+            const newThreads = prev.filter(t => t.id !== threadId);
+            return newThreads;
+        });
+        if (currentThreadId === threadId) {
+            setCurrentThreadId(null);
+            setMessages([
+                { role: 'assistant', content: "Thread deleted. How can I help you starting fresh?" }
+            ]);
+        }
+    };
+
+    const clearAllHistory = () => {
+        setThreads([]);
+        setCurrentThreadId(null);
+        setMessages([
+            { role: 'assistant', content: "All history has been cleared. How can I help you today?" }
+        ]);
+        setActiveTab('chat');
+        setShowClearConfirm(false);
     };
 
     const handleSend = async () => {
@@ -459,15 +484,33 @@ export default function FredChat({ isOpen, onClose }) {
                                             background: currentThreadId === thread.id ? 'rgba(var(--brand-primary-rgb), 0.1)' : 'var(--bg-secondary)',
                                             borderRadius: '12px',
                                             border: currentThreadId === thread.id ? '1px solid var(--brand-primary)' : '1px solid var(--border-primary)',
-                                            cursor: 'pointer', transition: 'all 0.2s'
+                                            cursor: 'pointer', transition: 'all 0.2s',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                            group: 'true'
                                         }}
+                                        className="history-item"
                                     >
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {thread.title}
+                                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                                            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {thread.title}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                {new Date(thread.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                                            </div>
                                         </div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                                            {new Date(thread.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                                        </div>
+                                        <button
+                                            onClick={(e) => deleteThread(e, thread.id)}
+                                            style={{
+                                                background: 'none', border: 'none', padding: '8px',
+                                                cursor: 'pointer', color: 'var(--text-tertiary)',
+                                                borderRadius: '6px', display: 'flex', alignItems: 'center',
+                                                justifyContent: 'center', transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -650,6 +693,58 @@ export default function FredChat({ isOpen, onClose }) {
                             >
                                 {apiKeySaved ? <><Check size={16} /> Saved!</> : 'Save Configuration'}
                             </button>
+                        </div>
+
+                        {/* Data Management Section */}
+                        <div style={{ padding: '24px', borderTop: '1px solid var(--border-secondary)', marginTop: '20px' }}>
+                            <div style={{ marginBottom: '4px', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Data Management</div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                                Manage your local application data and history.
+                            </div>
+
+                            {!showClearConfirm ? (
+                                <button
+                                    onClick={() => setShowClearConfirm(true)}
+                                    style={{
+                                        width: '100%', padding: '12px', borderRadius: '12px',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                        fontSize: '0.9rem', fontWeight: 600,
+                                        border: '1px solid var(--border-primary)',
+                                        background: 'rgba(239, 68, 68, 0.05)',
+                                        color: '#ef4444', cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
+                                >
+                                    <Trash2 size={16} /> Clear All History
+                                </button>
+                            ) : (
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={clearAllHistory}
+                                        style={{
+                                            flex: 1, padding: '12px', borderRadius: '12px',
+                                            fontSize: '0.9rem', fontWeight: 700,
+                                            background: '#ef4444', color: 'white',
+                                            border: 'none', cursor: 'pointer'
+                                        }}
+                                    >
+                                        Yes, Clear All
+                                    </button>
+                                    <button
+                                        onClick={() => setShowClearConfirm(false)}
+                                        style={{
+                                            flex: 1, padding: '12px', borderRadius: '12px',
+                                            fontSize: '0.9rem', fontWeight: 600,
+                                            background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+                                            border: '1px solid var(--border-primary)', cursor: 'pointer'
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

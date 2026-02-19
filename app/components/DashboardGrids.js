@@ -402,3 +402,191 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
         </div>
     );
 }
+
+// ─── Squad Detail Panel (Drill-Down) ────────────────
+export function SquadDetailPanel({ squadName, data, onClose }) {
+    if (!squadName || !data) return null;
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    const groupedGoals = useMemo(() => {
+        const goals = data.goals || [];
+        return {
+            'Critical & Overdue': goals.filter(g => !isCompleted(g.status) && (isOverdue(g) || isHighPriority(g))),
+            'Blocked': goals.filter(g => !isCompleted(g.status) && isBlocked(g.status)),
+            'Active In Progress': goals.filter(g => !isCompleted(g.status) && isActive(g.status) && !isOverdue(g) && !isHighPriority(g)),
+            'Completed': goals.filter(g => isCompleted(g.status)).map(g => ({
+                ...g,
+                wasOverdue: g.dueDate && new Date(g.dueDate) < new Date(),
+                wasCritical: isHighPriority(g)
+            })),
+        };
+    }, [data.goals]);
+
+    const filteredGroups = activeFilter === 'all'
+        ? groupedGoals
+        : Object.fromEntries(
+            Object.entries(groupedGoals).map(([name, goals]) => {
+                if (activeFilter === 'overdue' && name === 'Critical & Overdue') return [name, goals.filter(g => isOverdue(g))];
+                if (activeFilter === 'high_priority' && name === 'Critical & Overdue') return [name, goals.filter(g => isHighPriority(g))];
+                if (activeFilter === 'blocked' && name === 'Blocked') return [name, goals];
+                if (activeFilter === 'active' && name === 'Active In Progress') return [name, goals];
+                if (activeFilter === 'completed' && name === 'Completed') return [name, goals];
+                return [name, []];
+            })
+        );
+
+    const toggleFilter = (f) => setActiveFilter(activeFilter === f ? 'all' : f);
+
+    return (
+        <div className="detail-panel-overlay" onClick={onClose}>
+            <div className="detail-panel animate-in-right" onClick={e => e.stopPropagation()}>
+                <div className="detail-header">
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                                width: '32px', height: '32px', borderRadius: '50%',
+                                background: 'var(--brand-primary)', color: 'white',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
+                                overflow: 'hidden', border: '1.5px solid #7c3aed', padding: '1px'
+                            }}>
+                                <Building2 size={16} />
+                            </div>
+                            {squadName}
+                        </h2>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                            <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Members:</span> {data.owners?.join(', ') || 'None'} · {data.totalGoals} goals
+                        </div>
+                    </div>
+                    <button className="btn btn-ghost" onClick={onClose}><X size={20} /></button>
+                </div>
+
+                <div className="detail-content">
+                    <div className="metrics-grid metrics-grid-3" style={{ gap: '8px' }}>
+                        <div
+                            className={`stat-box clickable ${activeFilter === 'active' ? 'active' : ''}`}
+                            onClick={() => toggleFilter('active')}
+                            style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '12px', border: activeFilter === 'active' ? '1px solid var(--status-active)' : '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">Active</div>
+                            <div className="stat-value" style={{ color: 'var(--status-active)' }}>{data.active}</div>
+                        </div>
+                        <div
+                            className={`stat-box clickable ${activeFilter === 'high_priority' ? 'active' : ''}`}
+                            onClick={() => toggleFilter('high_priority')}
+                            style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '12px', border: activeFilter === 'high_priority' ? '1px solid var(--status-overdue)' : '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">High P</div>
+                            <div className="stat-value" style={{ color: 'var(--status-overdue)' }}>{data.goals?.filter(g => isHighPriority(g) && !isCompleted(g.status)).length || 0}</div>
+                        </div>
+                        <div
+                            className={`stat-box clickable ${activeFilter === 'overdue' ? 'active' : ''}`}
+                            onClick={() => toggleFilter('overdue')}
+                            style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '12px', border: activeFilter === 'overdue' ? '1px solid var(--signal-red)' : '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">Overdue</div>
+                            <div className="stat-value" style={{ color: 'var(--signal-red)' }}>{data.overdue}</div>
+                        </div>
+                        <div
+                            className={`stat-box clickable ${activeFilter === 'blocked' ? 'active' : ''}`}
+                            onClick={() => toggleFilter('blocked')}
+                            style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '12px', border: activeFilter === 'blocked' ? '1px solid var(--signal-amber)' : '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">Blocked</div>
+                            <div className="stat-value" style={{ color: 'var(--signal-amber)' }}>{data.blocked}</div>
+                        </div>
+                        <div
+                            className={`stat-box clickable ${activeFilter === 'completed' ? 'active' : ''}`}
+                            onClick={() => toggleFilter('completed')}
+                            style={{ cursor: 'pointer', transition: 'all 0.2s', padding: '12px', border: activeFilter === 'completed' ? '1px solid var(--signal-green)' : '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">Done</div>
+                            <div className="stat-value" style={{ color: 'var(--signal-green)' }}>{data.completed}</div>
+                        </div>
+                        <div
+                            className="stat-box"
+                            style={{ padding: '12px', border: '1px solid var(--border-secondary)' }}
+                        >
+                            <div className="stat-label">Health</div>
+                            <RiskBadge level={data.riskLevel} />
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                            {activeFilter !== 'all' ? `Filtering by ${activeFilter}` : 'Showing all tasks'}
+                        </div>
+                        {activeFilter !== 'all' && (
+                            <button className="btn btn-ghost btn-sm" onClick={() => setActiveFilter('all')} style={{ fontSize: '0.7rem' }}>Clear Filter</button>
+                        )}
+                    </div>
+
+                    {Object.entries(filteredGroups).map(([group, goals]) => (
+                        goals.length > 0 && (
+                            <div key={group} style={{ marginTop: '24px' }}>
+                                <h3 style={{
+                                    fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-secondary)',
+                                    borderBottom: '1px solid var(--border-secondary)', paddingBottom: '8px', marginBottom: '12px'
+                                }}>
+                                    {group} <span style={{ opacity: 0.5 }}>({goals.length})</span>
+                                </h3>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {goals.map((goal, i) => (
+                                        <div key={i} className="card task-card" style={{ padding: '12px', borderLeft: `3px solid ${getStatusColor(goal.status)}` }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                                <a
+                                                    href={goal.sourceUrl || goal.notionUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="hover-underline"
+                                                    style={{ fontWeight: 500, color: 'var(--text-primary)', textDecoration: 'none', lineHeight: '1.4', flex: 1, marginRight: '12px' }}
+                                                >
+                                                    {goal.goalTitle} <ExternalLink size={10} style={{ display: 'inline', opacity: 0.5 }} />
+                                                </a>
+                                                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: '80px' }}>
+                                                    {isHighPriority(goal) && !isCompleted(goal.status) && (
+                                                        <span className="badge badge-red" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Critical</span>
+                                                    )}
+                                                    {isOverdue(goal) && !isCompleted(goal.status) && (
+                                                        <span className="badge badge-amber" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Overdue</span>
+                                                    )}
+                                                    <span className="badge badge-neutral" style={{ fontSize: '0.65rem' }}>{goal.status}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: 'var(--brand-primary)', border: '1px solid var(--border-primary)' }}>
+                                                        {goal.owner?.charAt(0) || '?'}
+                                                    </div>
+                                                    <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{goal.owner || 'Unassigned'}</span>
+                                                </div>
+
+                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                    {goal.dueDate && (
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: (isOverdue(goal) && !isCompleted(goal.status)) ? 'var(--signal-red)' : 'inherit' }}>
+                                                            <Clock size={10} /> {goal.dueDate}
+                                                        </span>
+                                                    )}
+                                                    {group === 'Completed' && (
+                                                        <>
+                                                            {goal.wasCritical && (
+                                                                <span className="badge badge-red" style={{ scale: '0.8', margin: 0, padding: '2px 6px' }}>Was Critical</span>
+                                                            )}
+                                                            {goal.wasOverdue && (
+                                                                <span className="badge badge-amber" style={{ scale: '0.8', margin: 0, padding: '2px 6px' }}>Was Overdue</span>
+                                                            )}
+                                                            <span className="badge badge-green" style={{ scale: '0.8', margin: 0, padding: '2px 6px' }}>Completed</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}

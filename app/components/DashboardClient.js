@@ -157,7 +157,9 @@ export default function DashboardClient({ children }) {
                     (status === 'blocked' && squad.blocked > 0) ||
                     (status === 'completed' && squad.completed > 0) ||
                     (status === 'active' && squad.active > 0) ||
-                    (status === 'high_priority' && squad.highPriority > 0);
+                    (status === 'high_priority' && squad.highPriority > 0) ||
+                    (status === 'critical' && squad.riskLevel === 'red') ||
+                    (status === 'at_risk' && (squad.riskLevel === 'amber' || squad.riskLevel === 'red'));
 
                 if (matchesSearch && matchesStatus) {
                     filteredSquads[name] = squad;

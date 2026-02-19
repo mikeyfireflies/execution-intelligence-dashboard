@@ -6,10 +6,10 @@ export default function FilterBar({ onFilterChange, filters }) {
     return (
         <div className="filter-bar animate-in" style={{
             display: 'flex', gap: '8px', alignItems: 'center',
+            flexWrap: 'wrap',
             marginBottom: 'var(--space-md)', padding: '8px 12px',
             background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-primary)',
-            maxWidth: '1200px'
+            border: '1px solid var(--border-primary)'
         }}>
             <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
