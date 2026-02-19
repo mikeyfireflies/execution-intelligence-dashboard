@@ -48,7 +48,11 @@ export function OwnerGrid({ owners, onRowClick }) {
                         </div>
                         <div style={{ minWidth: 0, textAlign: 'left' }}>
                             <div style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{owner}</div>
-                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>{data.totalGoals} goals</div>
+                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)' }}>
+                                {data.role ? <span style={{ color: 'var(--brand-primary)' }}>{data.role}</span> : ''}
+                                {data.role ? ' • ' : ''}
+                                {data.totalGoals} goals
+                            </div>
                         </div>
                     </div>
                     <div className="grid-cell" data-label="Active" style={{ justifyContent: 'center' }}>
@@ -262,6 +266,8 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                             {owner}
                         </h2>
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                            {data.role ? <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{data.role}</span> : ''}
+                            {data.role ? ' · ' : ''}
                             {data.squad || 'Independent Contributors'} · {data.totalGoals} goals
                         </div>
                         <Link
