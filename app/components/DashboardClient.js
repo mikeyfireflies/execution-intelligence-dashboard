@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import DashboardLayout from './DashboardLayout';
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Send, Bot, User, Sparkles, History, HelpCircle, Plus } from 'lucide-react';
+import { X, Send, Bot, User, Sparkles, History, HelpCircle, Plus, Settings, Key, Check, Eye, EyeOff, Zap, Brain, Cpu } from 'lucide-react';
 
 export default function FredChat({ isOpen, onClose }) {
-    const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'capabilities', 'history'
+    const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'skills', 'history', 'config'
     const [threads, setThreads] = useState([]);
     const [currentThreadId, setCurrentThreadId] = useState(null);
     const [messages, setMessages] = useState([
@@ -14,18 +14,36 @@ export default function FredChat({ isOpen, onClose }) {
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Load threads on mount
+    // Config state — dual key support
+    const [apiKeys, setApiKeys] = useState({ 1: '', 2: '' });
+    const [activeKey, setActiveKey] = useState(1); // 1 or 2
+    const [showKey, setShowKey] = useState({ 1: false, 2: false });
+    const [apiKeySaved, setApiKeySaved] = useState(false);
+    const [selectedModel, setSelectedModel] = useState('gemini-2.0-flash');
+    const [intelligenceMode, setIntelligenceMode] = useState('balanced');
+
+    const models = [
+        { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', provider: 'Google', note: 'Latest · Fast · 1M context' },
+        { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google', note: 'Advanced reasoning · 2M context' },
+        { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash Exp', provider: 'Google', note: 'Experimental · Cutting-edge' },
+    ];
+
+    // Load config on mount
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const savedThreads = localStorage.getItem('fred_chat_threads');
             if (savedThreads) {
-                try {
-                    const parsed = JSON.parse(savedThreads);
-                    setThreads(parsed);
-                } catch (e) {
-                    console.error("Failed to parse threads", e);
-                }
+                try { setThreads(JSON.parse(savedThreads)); } catch (e) { }
             }
+            const k1 = localStorage.getItem('fred_api_key_1') || '';
+            const k2 = localStorage.getItem('fred_api_key_2') || '';
+            const active = parseInt(localStorage.getItem('fred_active_key') || '1', 10);
+            setApiKeys({ 1: k1, 2: k2 });
+            setActiveKey(active);
+            const model = localStorage.getItem('fred_model');
+            if (model) setSelectedModel(model);
+            const mode = localStorage.getItem('fred_intelligence_mode');
+            if (mode) setIntelligenceMode(mode);
         }
     }, []);
 
@@ -43,6 +61,25 @@ export default function FredChat({ isOpen, onClose }) {
     useEffect(() => {
         if (activeTab === 'chat') scrollToBottom();
     }, [messages, activeTab]);
+
+    const handleSaveConfig = () => {
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('fred_api_key_1', apiKeys[1]);
+            localStorage.setItem('fred_api_key_2', apiKeys[2]);
+            localStorage.setItem('fred_active_key', String(activeKey));
+            localStorage.setItem('fred_model', selectedModel);
+            localStorage.setItem('fred_intelligence_mode', intelligenceMode);
+        }
+        setApiKeySaved(true);
+        setTimeout(() => setApiKeySaved(false), 2500);
+    };
+
+    const setActiveAndSave = (num) => {
+        setActiveKey(num);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('fred_active_key', String(num));
+        }
+    };
 
     const startNewChat = () => {
         const newThreadId = Date.now().toString();
@@ -68,7 +105,6 @@ export default function FredChat({ isOpen, onClose }) {
         setInput('');
         setLoading(true);
 
-        // Ensure we have a thread ID
         let threadId = currentThreadId;
         if (!threadId) {
             threadId = Date.now().toString();
@@ -80,7 +116,9 @@ export default function FredChat({ isOpen, onClose }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: newMessages
+                    messages: newMessages,
+                    apiKey: apiKeys[activeKey] || undefined,
+                    model: selectedModel,
                 })
             });
 
@@ -92,7 +130,6 @@ export default function FredChat({ isOpen, onClose }) {
 
             setMessages(finalMessages);
 
-            // Update threads list
             setThreads(prev => {
                 const existingIndex = prev.findIndex(t => t.id === threadId);
                 const updatedThread = {
@@ -101,7 +138,6 @@ export default function FredChat({ isOpen, onClose }) {
                     timestamp: new Date().toISOString(),
                     messages: finalMessages
                 };
-
                 if (existingIndex >= 0) {
                     const newThreads = [...prev];
                     newThreads[existingIndex] = updatedThread;
@@ -112,13 +148,29 @@ export default function FredChat({ isOpen, onClose }) {
             });
 
         } catch (err) {
-            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Please check your GOOGLE_API_KEY." }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Please check your API key in the Configuration tab." }]);
         } finally {
             setLoading(false);
         }
     };
 
     if (!isOpen) return null;
+
+    const tabStyle = (tab) => ({
+        padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '6px',
+        background: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+        borderTop: '0', borderLeft: '0', borderRight: '0',
+        borderBottomWidth: '2px', borderBottomStyle: 'solid',
+        borderBottomColor: activeTab === tab ? 'var(--brand-primary)' : 'transparent',
+        color: activeTab === tab ? 'var(--brand-primary)' : 'var(--text-secondary)',
+        whiteSpace: 'nowrap',
+    });
+
+    const intelligenceModes = [
+        { id: 'fast', icon: <Zap size={18} />, label: 'Fast', desc: 'Quick responses with basic analysis. Best for simple questions and quick lookups.' },
+        { id: 'balanced', icon: <Brain size={18} />, label: 'Balanced', desc: 'Good quality with moderate speed. Recommended for most use cases.' },
+        { id: 'ultrathink', icon: <Cpu size={18} />, label: 'Ultrathink', desc: 'Deep analysis with comprehensive reasoning. For complex questions requiring thorough research.' },
+    ];
 
     return (
         <div className="fred-chat-overlay" style={{
@@ -127,7 +179,7 @@ export default function FredChat({ isOpen, onClose }) {
             zIndex: 3000, display: 'flex', justifyContent: 'flex-end'
         }} onClick={onClose}>
             <div className="fred-chat-drawer" style={{
-                width: '100%', maxWidth: '450px',
+                width: '100%', maxWidth: '480px',
                 background: 'var(--bg-elevated)', borderLeft: '1px solid var(--border-primary)',
                 display: 'flex', flexDirection: 'column',
                 boxShadow: 'var(--shadow-xl)',
@@ -173,52 +225,26 @@ export default function FredChat({ isOpen, onClose }) {
                     display: 'flex',
                     borderBottom: '1px solid var(--border-secondary)',
                     background: 'var(--bg-secondary)',
-                    padding: '0 12px'
+                    padding: '0 8px',
+                    overflowX: 'auto',
                 }}>
-                    <button
-                        onClick={() => setActiveTab('chat')}
-                        style={{
-                            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px',
-                            background: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-                            borderTop: '0', borderLeft: '0', borderRight: '0',
-                            borderBottomWidth: '2px', borderBottomStyle: 'solid',
-                            borderBottomColor: activeTab === 'chat' ? 'var(--brand-primary)' : 'transparent',
-                            color: activeTab === 'chat' ? 'var(--brand-primary)' : 'var(--text-secondary)'
-                        }}
-                    >
-                        <Bot size={16} /> Chat
+                    <button onClick={() => setActiveTab('chat')} style={tabStyle('chat')}>
+                        <Bot size={14} /> Chat
                     </button>
-                    <button
-                        onClick={() => setActiveTab('capabilities')}
-                        style={{
-                            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px',
-                            background: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-                            borderTop: '0', borderLeft: '0', borderRight: '0',
-                            borderBottomWidth: '2px', borderBottomStyle: 'solid',
-                            borderBottomColor: activeTab === 'capabilities' ? 'var(--brand-primary)' : 'transparent',
-                            color: activeTab === 'capabilities' ? 'var(--brand-primary)' : 'var(--text-secondary)'
-                        }}
-                    >
-                        <HelpCircle size={16} /> Capabilities
+                    <button onClick={() => setActiveTab('skills')} style={tabStyle('skills')}>
+                        <HelpCircle size={14} /> Skills
                     </button>
-                    <button
-                        onClick={() => setActiveTab('history')}
-                        style={{
-                            padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '8px',
-                            background: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600,
-                            borderTop: '0', borderLeft: '0', borderRight: '0',
-                            borderBottomWidth: '2px', borderBottomStyle: 'solid',
-                            borderBottomColor: activeTab === 'history' ? 'var(--brand-primary)' : 'transparent',
-                            color: activeTab === 'history' ? 'var(--brand-primary)' : 'var(--text-secondary)'
-                        }}
-                    >
-                        <History size={16} /> History
+                    <button onClick={() => setActiveTab('history')} style={tabStyle('history')}>
+                        <History size={14} /> History
+                    </button>
+                    <button onClick={() => setActiveTab('config')} style={tabStyle('config')}>
+                        <Settings size={14} /> Configuration
                     </button>
                 </div>
 
+                {/* ── CHAT TAB ── */}
                 {activeTab === 'chat' && (
                     <>
-                        {/* Messages */}
                         <div className="fred-chat-messages" style={{
                             flex: 1, overflowY: 'auto', padding: '24px',
                             display: 'flex', flexDirection: 'column', gap: '20px'
@@ -256,21 +282,28 @@ export default function FredChat({ isOpen, onClose }) {
                                     <div style={{
                                         width: '32px', height: '32px', borderRadius: '50%',
                                         background: 'var(--brand-primary)', display: 'flex',
-                                        alignItems: 'center', justifyContent: 'center'
+                                        alignItems: 'center', justifyContent: 'center', flexShrink: 0
                                     }}>
                                         <Bot size={16} color="white" />
                                     </div>
-                                    <div style={{ padding: '14px 18px', background: 'var(--bg-secondary)', borderRadius: '18px', display: 'flex', gap: '4px' }}>
-                                        <div className="typing-dot" style={{ animationDelay: '0s' }}></div>
-                                        <div className="typing-dot" style={{ animationDelay: '0.2s' }}></div>
-                                        <div className="typing-dot" style={{ animationDelay: '0.4s' }}></div>
+                                    <div style={{
+                                        padding: '12px 18px', background: 'var(--bg-secondary)',
+                                        borderRadius: '18px', borderBottomLeftRadius: '2px',
+                                        display: 'flex', alignItems: 'center', gap: '10px',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}>
+                                        <svg className="fred-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2.5" strokeLinecap="round">
+                                            <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                        </svg>
+                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                            Fred is thinking...
+                                        </span>
                                     </div>
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input */}
                         <div className="fred-chat-input-container" style={{
                             padding: '24px', borderTop: '1px solid var(--border-secondary)',
                             background: 'var(--bg-primary)'
@@ -301,42 +334,36 @@ export default function FredChat({ isOpen, onClose }) {
                     </>
                 )}
 
-                {activeTab === 'capabilities' && (
+                {/* ── CAPABILITIES TAB ── */}
+                {activeTab === 'skills' && (
                     <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
-                        <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Fred's Tools</h3>
+                        <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', color: 'var(--text-primary)' }}>Fred's Skills</h3>
                         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
                             I have direct integration with the Execution Dashboard. Here is what I can do:
                         </p>
-
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                            <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-primary)' }}>
-                                <div style={{ fontWeight: 600, color: 'var(--brand-primary)', marginBottom: '4px' }}>Health Score Monitoring</div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>I can fetch the company's real-time health score and high-level execution metrics.</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '8px', fontStyle: 'italic' }}>"What's our current health score?"</div>
-                            </div>
-
-                            <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-primary)' }}>
-                                <div style={{ fontWeight: 600, color: 'var(--brand-primary)', marginBottom: '4px' }}>Risk Analysis</div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>I can analyze individual performance and identify who is currently at risk or has overdue tasks.</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '8px', fontStyle: 'italic' }}>"Who is currently high risk?"</div>
-                            </div>
-
-                            <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-primary)' }}>
-                                <div style={{ fontWeight: 600, color: 'var(--brand-primary)', marginBottom: '4px' }}>Notion Goal Search</div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>I can search the entire Notion Execution database for specific goals, owners, or statuses.</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '8px', fontStyle: 'italic' }}>"Search for goals related to 'AI Integration'"</div>
-                            </div>
+                            {[
+                                { title: 'Health Score Monitoring', desc: "I can fetch the company's real-time health score and high-level execution metrics.", example: '"What\'s our current health score?"' },
+                                { title: 'Risk Analysis', desc: 'I can analyze individual performance and identify who is currently at risk or has overdue tasks.', example: '"Who is currently high risk?"' },
+                                { title: 'Notion Goal Search', desc: 'I can search the entire Notion Execution database for specific goals, owners, or statuses.', example: '"Search for goals related to \'AI Integration\'"' },
+                            ].map((item) => (
+                                <div key={item.title} style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-primary)' }}>
+                                    <div style={{ fontWeight: 600, color: 'var(--brand-primary)', marginBottom: '4px' }}>{item.title}</div>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{item.desc}</div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '8px', fontStyle: 'italic' }}>{item.example}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
 
+                {/* ── HISTORY TAB ── */}
                 {activeTab === 'history' && (
                     <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>Chat History</h3>
                             <button className="btn btn-primary btn-sm" onClick={startNewChat}>+ New Thread</button>
                         </div>
-
                         {threads.length === 0 ? (
                             <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-tertiary)' }}>
                                 <History size={48} style={{ opacity: 0.2, marginBottom: '12px' }} />
@@ -353,8 +380,7 @@ export default function FredChat({ isOpen, onClose }) {
                                             background: currentThreadId === thread.id ? 'rgba(var(--brand-primary-rgb), 0.1)' : 'var(--bg-secondary)',
                                             borderRadius: '12px',
                                             border: currentThreadId === thread.id ? '1px solid var(--brand-primary)' : '1px solid var(--border-primary)',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s'
+                                            cursor: 'pointer', transition: 'all 0.2s'
                                         }}
                                     >
                                         <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -370,18 +396,198 @@ export default function FredChat({ isOpen, onClose }) {
                     </div>
                 )}
 
+                {/* ── CONFIGURATION TAB ── */}
+                {activeTab === 'config' && (
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+
+                        {/* Intelligence Section */}
+                        <div style={{ padding: '24px', borderBottom: '1px solid var(--border-secondary)' }}>
+                            <div style={{ marginBottom: '4px', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Intelligence</div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>Configure how Fred responds to your queries</div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+                                {intelligenceModes.map(mode => (
+                                    <div
+                                        key={mode.id}
+                                        onClick={() => setIntelligenceMode(mode.id)}
+                                        style={{
+                                            padding: '14px 12px',
+                                            borderRadius: '12px',
+                                            border: `2px solid ${intelligenceMode === mode.id ? 'var(--brand-primary)' : 'var(--border-primary)'}`,
+                                            background: intelligenceMode === mode.id ? 'rgba(var(--brand-primary-rgb), 0.07)' : 'var(--bg-secondary)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            position: 'relative',
+                                        }}
+                                    >
+                                        {intelligenceMode === mode.id && (
+                                            <div style={{
+                                                position: 'absolute', top: '8px', right: '8px',
+                                                width: '18px', height: '18px', borderRadius: '50%',
+                                                background: 'var(--brand-primary)', display: 'flex',
+                                                alignItems: 'center', justifyContent: 'center'
+                                            }}>
+                                                <Check size={10} color="white" />
+                                            </div>
+                                        )}
+                                        <div style={{ color: 'var(--brand-primary)', marginBottom: '6px' }}>{mode.icon}</div>
+                                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{mode.label}</div>
+                                        <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{mode.desc}</div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Model selector */}
+                            <div style={{ marginTop: '4px' }}>
+                                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>Model</div>
+                                <select
+                                    value={selectedModel}
+                                    onChange={e => setSelectedModel(e.target.value)}
+                                    style={{
+                                        width: '100%', padding: '10px 14px',
+                                        background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
+                                        borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.9rem',
+                                        outline: 'none', cursor: 'pointer',
+                                    }}
+                                >
+                                    {models.map(m => (
+                                        <option key={m.id} value={m.id}>{m.label}</option>
+                                    ))}
+                                </select>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--brand-primary)', marginTop: '6px' }}>
+                                    {models.find(m => m.id === selectedModel)?.note}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* API Keys Section */}
+                        <div style={{ padding: '24px' }}>
+                            <div style={{ marginBottom: '4px', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>API Keys</div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                                Store up to two Google Gemini keys and switch between them instantly.
+                            </div>
+
+                            {[1, 2].map(num => {
+                                const isActive = activeKey === num;
+                                const hasKey = !!apiKeys[num];
+                                return (
+                                    <div key={num} style={{
+                                        padding: '16px', marginBottom: '12px',
+                                        borderRadius: '12px',
+                                        border: `2px solid ${isActive ? 'var(--brand-primary)' : 'var(--border-primary)'}`,
+                                        background: isActive ? 'rgba(var(--brand-primary-rgb), 0.05)' : 'var(--bg-secondary)',
+                                        transition: 'all 0.2s',
+                                    }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                            <div style={{
+                                                width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+                                                background: isActive ? 'var(--brand-primary)' : 'linear-gradient(135deg, #4285F4, #34A853)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            }}>
+                                                <Key size={14} color="white" />
+                                            </div>
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                                                    Key {num}
+                                                </div>
+                                                <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>Google Gemini</div>
+                                            </div>
+                                            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {hasKey && isActive && (
+                                                    <div style={{
+                                                        fontSize: '0.7rem', fontWeight: 700,
+                                                        color: 'var(--brand-primary)', background: 'rgba(var(--brand-primary-rgb), 0.12)',
+                                                        padding: '2px 10px', borderRadius: '20px',
+                                                        border: '1px solid rgba(var(--brand-primary-rgb), 0.3)',
+                                                    }}>
+                                                        ● Active
+                                                    </div>
+                                                )}
+                                                {hasKey && !isActive && (
+                                                    <button
+                                                        onClick={() => setActiveAndSave(num)}
+                                                        style={{
+                                                            fontSize: '0.72rem', fontWeight: 600, padding: '3px 10px',
+                                                            borderRadius: '20px', cursor: 'pointer',
+                                                            border: '1px solid var(--border-primary)',
+                                                            background: 'var(--bg-primary)',
+                                                            color: 'var(--text-secondary)',
+                                                        }}
+                                                    >
+                                                        Set Active
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                type={showKey[num] ? 'text' : 'password'}
+                                                placeholder="AIza..."
+                                                value={apiKeys[num]}
+                                                onChange={e => setApiKeys(prev => ({ ...prev, [num]: e.target.value }))}
+                                                style={{
+                                                    width: '100%', padding: '10px 40px 10px 14px',
+                                                    background: 'var(--bg-primary)', border: '1px solid var(--border-primary)',
+                                                    borderRadius: '10px', color: 'var(--text-primary)', fontSize: '0.875rem',
+                                                    outline: 'none', boxSizing: 'border-box',
+                                                    fontFamily: apiKeys[num] && !showKey[num] ? 'monospace' : 'inherit',
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => setShowKey(prev => ({ ...prev, [num]: !prev[num] }))}
+                                                style={{
+                                                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                                                    background: 'none', border: 'none', cursor: 'pointer',
+                                                    color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center',
+                                                }}
+                                            >
+                                                {showKey[num] ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', marginBottom: '16px' }}>
+                                Get your API keys at{' '}
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                                    style={{ color: 'var(--brand-primary)', textDecoration: 'none' }}>
+                                    aistudio.google.com
+                                </a>
+                            </div>
+
+                            {/* Save button */}
+                            <button
+                                onClick={handleSaveConfig}
+                                className="btn btn-primary"
+                                style={{
+                                    width: '100%', padding: '12px', borderRadius: '12px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    fontSize: '0.9rem', fontWeight: 600,
+                                    background: apiKeySaved ? '#22c55e' : undefined,
+                                    transition: 'background 0.3s',
+                                }}
+                            >
+                                {apiKeySaved ? <><Check size={16} /> Saved!</> : 'Save Configuration'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+
                 <style jsx>{`
                     @keyframes slideIn {
                         from { transform: translateX(100%); }
                         to { transform: translateX(0); }
                     }
-                    .typing-dot {
-                        width: 6px; height: 6px; background: var(--text-tertiary);
-                        border-radius: 50%; animation: typing 1.4s infinite ease-in-out;
+                    @keyframes fredSpin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
                     }
-                    @keyframes typing {
-                        0%, 80%, 100% { opacity: 0; transform: translateY(0); }
-                        40% { opacity: 1; transform: translateY(-4px); }
+                    .fred-spin {
+                        animation: fredSpin 0.9s linear infinite;
+                        flex-shrink: 0;
                     }
                 `}</style>
             </div>

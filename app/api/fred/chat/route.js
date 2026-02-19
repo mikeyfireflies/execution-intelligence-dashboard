@@ -34,16 +34,19 @@ const tools = [
 
 export async function POST(req) {
     try {
-        const { messages } = await req.json();
-        const apiKey = process.env.GOOGLE_API_KEY;
+        const { messages, apiKey: clientApiKey, model: clientModel } = await req.json();
+        const apiKey = clientApiKey || process.env.GOOGLE_API_KEY;
+        // Whitelist valid models — auto-corrects stale localStorage values like gemini-1.5-flash
+        const VALID_MODELS = ['gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'];
+        const modelId = VALID_MODELS.includes(clientModel) ? clientModel : 'gemini-2.0-flash';
 
         if (!apiKey) {
-            return Response.json({ content: "I'm ready to help, but I need a 'GOOGLE_API_KEY' in the environment to start talking! Please add it to your .env.local file." }, { status: 200 });
+            return Response.json({ content: "I need an API key to work! Please add your Google Gemini API key in the Configuration tab (⚙️) or set GOOGLE_API_KEY in .env.local." }, { status: 200 });
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: modelId,
             tools: tools,
             systemInstruction: `You are Fred, the official Fireflies.AI Execution Intelligence Assistant.
 You are embedded directly within the Execution Dashboard.
@@ -56,12 +59,16 @@ Key Knowledge:
 - Be concise, executive, and highly helpful. Do not ask generic questions about the implementation if the information is already in your knowledge.`
         });
 
-        const chat = model.startChat({
-            history: messages.slice(0, -1).map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }],
-            })),
-        });
+        // Gemini requires the history to start with a 'user' turn.
+        // Drop any leading assistant/model messages (e.g. Fred's greeting).
+        const rawHistory = messages.slice(0, -1).map(m => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+        }));
+        const firstUserIdx = rawHistory.findIndex(m => m.role === 'user');
+        const history = firstUserIdx >= 0 ? rawHistory.slice(firstUserIdx) : [];
+
+        const chat = model.startChat({ history });
 
         const userMessage = messages[messages.length - 1].content;
         let result = await chat.sendMessage(userMessage);
