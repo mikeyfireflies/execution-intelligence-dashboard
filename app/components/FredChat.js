@@ -3,6 +3,75 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, User, Sparkles, History, HelpCircle, Plus, Settings, Key, Check, Eye, EyeOff, Zap, Brain, Cpu } from 'lucide-react';
 
+// Lightweight markdown renderer for Fred's chat messages
+function renderMarkdown(text) {
+    if (!text) return '';
+    // Split into lines for block-level processing
+    const lines = text.split('\n');
+    let html = '';
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+
+        // Headings
+        if (line.startsWith('### ')) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div style="font-weight:700;font-size:0.95rem;margin:12px 0 6px;color:var(--text-primary)">${inlineFormat(line.slice(4))}</div>`;
+            continue;
+        }
+        if (line.startsWith('## ')) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += `<div style="font-weight:700;font-size:1rem;margin:14px 0 6px;color:var(--text-primary)">${inlineFormat(line.slice(3))}</div>`;
+            continue;
+        }
+
+        // Unordered list items (- or *)
+        const ulMatch = line.match(/^[\s]*[-*]\s+(.*)/);
+        if (ulMatch) {
+            if (!inList) { html += '<ul style="margin:4px 0;padding-left:18px">'; inList = true; }
+            html += `<li style="margin:3px 0;line-height:1.5">${inlineFormat(ulMatch[1])}</li>`;
+            continue;
+        }
+
+        // Ordered list items (1. 2. etc)
+        const olMatch = line.match(/^[\s]*\d+\.\s+(.*)/);
+        if (olMatch) {
+            if (!inList) { html += '<ul style="margin:4px 0;padding-left:18px;list-style:decimal">'; inList = true; }
+            html += `<li style="margin:3px 0;line-height:1.5">${inlineFormat(olMatch[1])}</li>`;
+            continue;
+        }
+
+        // Close list if we were in one
+        if (inList) { html += '</ul>'; inList = false; }
+
+        // Empty line = paragraph break
+        if (line.trim() === '') {
+            html += '<div style="height:8px"></div>';
+            continue;
+        }
+
+        // Regular paragraph
+        html += `<div style="line-height:1.5;margin:2px 0">${inlineFormat(line)}</div>`;
+    }
+
+    if (inList) html += '</ul>';
+    return html;
+}
+
+// Inline formatting: bold, italic, code, links
+function inlineFormat(text) {
+    return text
+        // Code blocks (backticks)
+        .replace(/`([^`]+)`/g, '<code style="background:rgba(var(--brand-primary-rgb),0.1);padding:1px 5px;border-radius:4px;font-size:0.85em;color:var(--brand-primary)">$1</code>')
+        // Bold
+        .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>')
+        // Italic
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color:var(--brand-primary);text-decoration:none;font-weight:500" target="_blank" rel="noopener">$1</a>');
+}
+
 export default function FredChat({ isOpen, onClose }) {
     const [activeTab, setActiveTab] = useState('chat'); // 'chat', 'skills', 'history', 'config'
     const [threads, setThreads] = useState([]);
@@ -271,9 +340,12 @@ export default function FredChat({ isOpen, onClose }) {
                                         color: msg.role === 'user' ? 'white' : 'var(--text-primary)',
                                         fontSize: '0.9375rem', lineHeight: '1.5',
                                         boxShadow: msg.role === 'assistant' ? 'var(--shadow-sm)' : 'none',
-                                        whiteSpace: 'pre-wrap'
                                     }}>
-                                        {msg.content}
+                                        {msg.role === 'user' ? (
+                                            <span style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</span>
+                                        ) : (
+                                            <div dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -343,9 +415,16 @@ export default function FredChat({ isOpen, onClose }) {
                         </p>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {[
-                                { title: 'Health Score Monitoring', desc: "I can fetch the company's real-time health score and high-level execution metrics.", example: '"What\'s our current health score?"' },
-                                { title: 'Risk Analysis', desc: 'I can analyze individual performance and identify who is currently at risk or has overdue tasks.', example: '"Who is currently high risk?"' },
-                                { title: 'Notion Goal Search', desc: 'I can search the entire Notion Execution database for specific goals, owners, or statuses.', example: '"Search for goals related to \'AI Integration\'"' },
+                                { title: '📊 Health Score Monitoring', desc: "Fetch the company's real-time health score with a weighted breakdown (Completion 30%, Overdue 25%, Recency 20%, Blocked 15%, Priority Lag 10%).", example: '"What\'s our current health score?"' },
+                                { title: '👥 Team Member Directory', desc: 'List all team members with their roles, departments, bios, and direct profile links from the Team Directory.', example: '"List all the team members"' },
+                                { title: '🚨 Risk Analysis', desc: 'Identify who is at risk (Red/Amber/Green) based on overdue items, blocked tasks, and update freshness.', example: '"Who is currently at risk?"' },
+                                { title: '🏢 Squad Health', desc: 'Analyze squad-level health: blockers, ownership clarity, stuck goals, and effort concentration.', example: '"How is the Mobile Squad doing?"' },
+                                { title: '🔍 Goal Search', desc: 'Search the Notion Execution Database for specific goals by title or owner name. Returns source URLs.', example: '"Find goals related to AI Integration"' },
+                                { title: '🚦 Status Filter', desc: 'Filter all goals by status: In Progress, Blocked, Done, Not Started, Overdue, or At Risk. Optionally filter by owner.', example: '"Show me all blocked tasks" or "What is overdue for Greg?"' },
+                                { title: '📈 Trend Comparison', desc: 'Analyzes week-over-week performance. Tells you if metrics like Health Score and Overdue rates are improving or slipping.', example: '"Are we getting better or worse than last week?"' },
+                                { title: '🏆 Performance Leaderboard', desc: 'Rank team members by tasks completed and total effort points delivered in the last 30 days.', example: '"Who is the top performer this month?"' },
+                                { title: '⚠️ Stale Goal Detector', desc: 'Identify "zombie" goals that haven\'t been updated in over 7 days, ensuring nothing falls through the cracks.', example: '"What goals have been forgotten?"' },
+                                { title: '🧠 Calculation Explainer', desc: 'Explain exactly how any dashboard metric is calculated — Health Score formula, Risk triggers, Velocity logic.', example: '"How is the health score calculated?"' },
                             ].map((item) => (
                                 <div key={item.title} style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-primary)' }}>
                                     <div style={{ fontWeight: 600, color: 'var(--brand-primary)', marginBottom: '4px' }}>{item.title}</div>

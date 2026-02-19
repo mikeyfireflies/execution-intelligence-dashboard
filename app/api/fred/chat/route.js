@@ -11,7 +11,11 @@ const tools = [
             },
             {
                 name: "get_team_performance",
-                description: "Get performance metrics for all individuals including risk levels and task counts",
+                description: "List all team members with their names, roles, risk levels, active/overdue/blocked task counts, and velocity sparklines",
+            },
+            {
+                name: "list_team_members",
+                description: "Get the full Team Directory roster with names, roles, departments, bios, and profile links for every member",
             },
             {
                 name: "get_squad_health",
@@ -19,13 +23,43 @@ const tools = [
             },
             {
                 name: "search_goals",
-                description: "Search for specific goals in the execution database",
+                description: "Search for specific goals in the execution database by title or owner name",
                 parameters: {
                     type: "OBJECT",
                     properties: {
                         query: { type: "STRING", description: "Search term for goal title or owner" },
                     },
                     required: ["query"],
+                },
+            },
+            {
+                name: "get_goals_by_status",
+                description: "Filter goals by status (In Progress, Blocked, Done, Not Started, Overdue) and optionally by owner name. Use this when users ask about overdue, blocked, completed, or in-progress tasks.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        status: { type: "STRING", description: "Status to filter by: 'In Progress', 'Blocked', 'Done', 'Not Started', 'Overdue', or 'At Risk'" },
+                        owner: { type: "STRING", description: "Optional owner name to further filter results" },
+                    },
+                    required: ["status"],
+                },
+            },
+            {
+                name: "get_execution_trends",
+                description: "Get week-over-week trends for Health Score, Overdue items, and Completion rates. Use this to answer 'Are we getting better or worse?'",
+            },
+            {
+                name: "get_top_performers",
+                description: "Rank team members by tasks completed and average velocity (effort points) in the last 30 days.",
+            },
+            {
+                name: "get_stale_goals",
+                description: "Identify goals that haven't been updated in more than 7 days. Use this to spot 'zombie' or forgotten tasks.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        days: { type: "NUMBER", description: "Threshold for days without updates (default: 7)" },
+                    },
                 },
             },
         ],
@@ -85,6 +119,12 @@ Every item and person gets a risk level based on these triggers:
 - **get_squad_health**: For team-level blockers and clarity.
 - **search_goals**: To find specific tickets or context.
 
+### 🛡️ Operational Safeguards (IMPORTANT)
+1. **NEVER Hallucinate Metrics**: If a user asks for a specific number (Health Score, Overdue count, etc.), you **MUST** call the appropriate tool. Do not guess or use information from your training data or previous turns if a tool is available.
+2. **Use Tool Values Exactly**: When a tool returns a value (e.g., \`healthScore: 56\`), use that exact number. Do not re-calculate it or round it differently.
+3. **Link Everything**: Every person name and goal title mentioned should be linked using the provided rules.
+4. **Be Professional & Technical**: You are an Execution Intelligence Assistant. Your tone is helpful, data-driven, and concise.
+
 ### 🔗 Linking & Formatting Rules (CRITICAL)
 Always make your answer actionable with links:
 1. **Goals/Tickets**: Format as \`[Goal Title](sourceUrl)\`.
@@ -130,6 +170,11 @@ Always make your answer actionable with links:
                 switch (name) {
                     case "get_dashboard_summary":
                         toolData = dashboard.company;
+                        console.log("FRED DEBUG: get_dashboard_summary", {
+                            healthScore: toolData.healthScore,
+                            completed: toolData.completed,
+                            totalPlanned: toolData.totalPlanned
+                        });
                         break;
                     case "get_team_performance":
                         toolData = dashboard.individual;
@@ -137,13 +182,106 @@ Always make your answer actionable with links:
                     case "get_squad_health":
                         toolData = dashboard.squads;
                         break;
-                    case "search_goals":
+                    case "list_team_members":
+                        toolData = dashboard.directory;
+                        break;
+                    case "search_goals": {
                         const { query } = args;
                         toolData = (dashboard.goals || []).filter(g =>
                             g.goalTitle?.toLowerCase().includes(query?.toLowerCase()) ||
                             g.owner?.toLowerCase().includes(query?.toLowerCase())
-                        ).slice(0, 5);
+                        ).slice(0, 10);
                         break;
+                    }
+                    case "get_goals_by_status": {
+                        const statusFilter = (args.status || '').toLowerCase();
+                        const ownerFilter = (args.owner || '').toLowerCase();
+                        let filtered = dashboard.goals || [];
+
+                        // Filter by owner if provided
+                        if (ownerFilter) {
+                            filtered = filtered.filter(g =>
+                                g.owner?.toLowerCase().includes(ownerFilter)
+                            );
+                        }
+
+                        // Filter by status
+                        if (statusFilter === 'overdue') {
+                            const now = new Date();
+                            filtered = filtered.filter(g =>
+                                g.dueDate && new Date(g.dueDate) < now &&
+                                !['done', 'complete', 'completed', 'shipped'].includes(g.status?.toLowerCase())
+                            );
+                        } else if (statusFilter === 'at risk') {
+                            filtered = filtered.filter(g => {
+                                const isOverdue = g.dueDate && new Date(g.dueDate) < new Date();
+                                const isBlocked = ['blocked', 'on hold', 'waiting'].includes(g.status?.toLowerCase());
+                                return (isOverdue || isBlocked) && !['done', 'complete', 'completed', 'shipped'].includes(g.status?.toLowerCase());
+                            });
+                        } else {
+                            filtered = filtered.filter(g =>
+                                g.status?.toLowerCase().includes(statusFilter)
+                            );
+                        }
+
+                        toolData = filtered.slice(0, 15).map(g => ({
+                            goalTitle: g.goalTitle,
+                            owner: g.owner,
+                            status: g.status,
+                            priority: g.priority,
+                            dueDate: g.dueDate,
+                            sourceUrl: g.sourceUrl || g.notionUrl,
+                        }));
+                        break;
+                    }
+                    case "get_execution_trends":
+                        toolData = {
+                            trends: dashboard.trends,
+                            recentSnapshots: (dashboard.snapshots || []).slice(-5).map(s => ({
+                                date: s.date,
+                                healthScore: s.company.healthScore,
+                                completed: s.company.completed,
+                                overdue: s.company.overdue,
+                                blocked: s.company.blocked,
+                            }))
+                        };
+                        break;
+                    case "get_top_performers":
+                        toolData = Object.values(dashboard.individual || {})
+                            .map(o => ({
+                                name: o.name,
+                                role: o.role,
+                                completedLast30: o.completed,
+                                totalGoals: o.totalGoals,
+                                riskLevel: o.riskLevel,
+                                velocityScore: Math.round(o.velocity.reduce((sum, v) => sum + v.points, 0) / 4 * 10) / 10
+                            }))
+                            .sort((a, b) => b.completedLast30 - a.completedLast30)
+                            .slice(0, 5);
+                        break;
+                    case "get_stale_goals": {
+                        const threshold = args.days || 7;
+                        toolData = (dashboard.goals || [])
+                            .filter(g => {
+                                if (['done', 'complete', 'completed', 'shipped'].includes(g.status?.toLowerCase())) return false;
+                                const lastUpdated = new Date(g.lastUpdated || g.created_time || Date.now());
+                                const diff = (Date.now() - lastUpdated.getTime()) / (1000 * 60 * 60 * 24);
+                                return diff > threshold;
+                            })
+                            .sort((a, b) => {
+                                const lastA = new Date(a.lastUpdated || a.created_time || 0);
+                                const lastB = new Date(b.lastUpdated || b.created_time || 0);
+                                return lastA - lastB; // Oldest first
+                            })
+                            .slice(0, 10)
+                            .map(g => ({
+                                goalTitle: g.goalTitle,
+                                owner: g.owner,
+                                lastUpdated: g.lastUpdated,
+                                notionUrl: g.notionUrl,
+                            }));
+                        break;
+                    }
                     default:
                         toolData = { error: "Unknown tool" };
                 }
