@@ -33,6 +33,9 @@
   --signal-red: #EF4444;
   --signal-red-bg: rgba(239, 68, 68, 0.1);
   --signal-red-border: rgba(239, 68, 68, 0.3);
+  --signal-purple: #7C3AED;
+  --signal-purple-bg: rgba(124, 58, 237, 0.1);
+  --signal-purple-border: rgba(124, 58, 237, 0.3);
 
   /* Status Colors */
   --status-active: #3B82F6;
@@ -104,6 +107,7 @@
   --signal-green-bg: rgba(16, 185, 129, 0.15);
   --signal-amber-bg: rgba(245, 158, 11, 0.15);
   --signal-red-bg: rgba(239, 68, 68, 0.15);
+  --signal-purple-bg: rgba(124, 58, 237, 0.15);
 }
 
 /* ─── Reset & Base ─────────────────────────────────── */

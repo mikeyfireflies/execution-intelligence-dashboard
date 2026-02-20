@@ -107,6 +107,15 @@ export default function ExecutiveView({ data, company, goals }) {
         });
     });
 
+    const formatDate = (dateString) => {
+        if (!dateString) return '—';
+        try {
+            return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        } catch (e) {
+            return dateString;
+        }
+    };
+
     return (
         <div className="executive-mode animate-in">
             <div style={{ textAlign: 'center', marginBottom: 'var(--space-xl)' }}>
@@ -278,6 +287,7 @@ export default function ExecutiveView({ data, company, goals }) {
                                             <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Dept / Squad</th>
                                             <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Target Date</th>
                                             <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Days Slipped</th>
+                                            <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Status</th>
                                             <th style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--text-secondary)' }}>Owner</th>
                                         </tr>
                                     </thead>
@@ -303,9 +313,22 @@ export default function ExecutiveView({ data, company, goals }) {
                                                     <div style={{ color: 'var(--text-primary)' }}>{item.department || '—'}</div>
                                                     <div style={{ color: 'var(--text-tertiary)', fontSize: '0.7rem' }}>{item.squad || '—'}</div>
                                                 </td>
-                                                <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{item.dueDate || '—'}</td>
+                                                <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{formatDate(item.dueDate)}</td>
                                                 <td style={{ padding: '12px 16px', color: 'var(--signal-red)', fontWeight: 600 }}>{item.slippageDays}d</td>
-                                                <td style={{ padding: '12px 16px', color: 'var(--text-secondary)' }}>{item.owner || '—'}</td>
+                                                <td style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{item.status || '—'}</td>
+                                                <td style={{ padding: '12px 16px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <div style={{
+                                                            width: '24px', height: '24px', borderRadius: '50%',
+                                                            background: 'var(--bg-tertiary)', color: 'var(--text-secondary)',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            fontSize: '0.65rem', fontWeight: 600
+                                                        }}>
+                                                            {String(item.owner || '?').charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <span style={{ color: 'var(--text-secondary)' }}>{item.owner || '—'}</span>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
