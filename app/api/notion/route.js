@@ -54,6 +54,7 @@ export async function GET(request) {
                 return NextResponse.json({
                     executive: data.executive,
                     company: data.company,
+                    goals: data.goals,
                     trends: data.trends,
                     lastFetched: data.lastFetched,
                 });

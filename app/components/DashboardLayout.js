@@ -5,10 +5,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Users, Building2, BarChart3, Eye, RefreshCw, Sun, Moon,
     AlertTriangle, X, PanelLeftClose, PanelLeftOpen, Home, Bell, Search,
-    Clock, ExternalLink, ChevronDown, ChevronRight
+    Clock, ExternalLink, ChevronDown, ChevronRight,
+    LogOut, Settings, HelpCircle, User
 } from 'lucide-react';
 import Link from 'next/link';
 import FredChat from './FredChat';
+import DashboardSettings from './DashboardSettings';
 import { RiskBadge } from './DashboardMetrics';
 
 let isInitialLoad = true;
@@ -104,6 +106,8 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
     };
 
     const [fredOpen, setFredOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
 
     const [inboxOpen, setInboxOpen] = useState(false);
     const [recentsOpen, setRecentsOpen] = useState(true);
@@ -157,8 +161,9 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
 
     // Derive inbox notifications from data
     const rawInboxItems = useMemo(() => {
-        if (!data) return { overdue: [], blocked: [], recentlyCompleted: [], riskAlerts: [] };
+        if (!data) return { overdue: [], blocked: [], recentlyCompleted: [], riskAlerts: [], initiativeAlerts: [] };
         const goals = data.goals || [];
+        const initiatives = data.initiatives || [];
         const now = new Date();
         const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
 
@@ -186,7 +191,18 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
             });
         }
 
-        return { overdue, blocked, recentlyCompleted, riskAlerts: riskAlerts.slice(0, 5) };
+        const initiativeAlerts = [];
+        initiatives.forEach(init => {
+            if (init.isSlipped) {
+                initiativeAlerts.push({ ...init, alertType: 'slipped', title: `Slippage: ${init.name} (${init.slippageDays}d late)` });
+            } else if (init.dataCompleteness === 'Missing') {
+                initiativeAlerts.push({ ...init, alertType: 'gap', title: `Data Gap: ${init.name} (Missing Owner/Date)` });
+            } else if (init.isStale) {
+                initiativeAlerts.push({ ...init, alertType: 'stale', title: `Stale: ${init.name} (>7d untouched)` });
+            }
+        });
+
+        return { overdue, blocked, recentlyCompleted, riskAlerts: riskAlerts.slice(0, 5), initiativeAlerts };
     }, [data]);
 
     const inboxItems = useMemo(() => {
@@ -206,12 +222,14 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
             overdue: rawInboxItems.overdue.filter(filterFn),
             blocked: rawInboxItems.blocked.filter(filterFn),
             recentlyCompleted: rawInboxItems.recentlyCompleted.filter(filterFn),
+            initiativeAlerts: rawInboxItems.initiativeAlerts.filter(filterFn),
         };
     }, [rawInboxItems, inboxFilter, archivedIds, readIds]);
 
     const totalInboxCount = inboxItems.overdue.filter(i => !readIds.includes(i.id || i.goalTitle)).length +
         inboxItems.blocked.filter(i => !readIds.includes(i.id || i.goalTitle)).length +
-        inboxItems.riskAlerts.filter(i => !readIds.includes(i.id || i.name)).length;
+        inboxItems.riskAlerts.filter(i => !readIds.includes(i.id || i.name)).length +
+        inboxItems.initiativeAlerts.filter(i => !readIds.includes(i.id)).length;
 
     // Recent updates
     const recentGoals = useMemo(() => {
@@ -230,7 +248,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
     ];
 
     return (
-        <div className="app-layout" style={{ '--sidebar-width': `${sidebarCollapsed ? 64 : sidebarWidth}px` }}>
+        <div suppressHydrationWarning className="app-layout" style={{ '--sidebar-width': `${sidebarCollapsed ? 64 : sidebarWidth}px` }}>
             <FredChat isOpen={fredOpen} onClose={() => setFredOpen(false)} data={data} />
 
             {/* Inbox Slide-out Panel */}
@@ -282,6 +300,29 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+
+                            {inboxItems.initiativeAlerts && inboxItems.initiativeAlerts.length > 0 && (
+                                <div style={{ marginBottom: '20px' }}>
+                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-amber)', marginBottom: '8px' }}>🎯 Initiative Alerts</div>
+                                    {inboxItems.initiativeAlerts.map((init, i) => {
+                                        let borderColor = 'var(--border-secondary)';
+                                        let icon = '';
+                                        if (init.alertType === 'slipped') { borderColor = 'var(--signal-red)'; icon = '🔴'; }
+                                        else if (init.alertType === 'gap') { borderColor = 'var(--signal-amber)'; icon = '🟡'; }
+                                        else if (init.alertType === 'stale') { borderColor = 'var(--signal-amber)'; icon = '⏰'; }
+
+                                        return (
+                                            <a key={i} href={init.notionUrl} target="_blank" rel="noopener noreferrer" className={`card inbox-card ${readIds.includes(init.id) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', display: 'block', textDecoration: 'none', borderLeft: `3px solid ${borderColor}`, cursor: 'pointer', position: 'relative' }} onClick={() => markRead(init.id)}>
+                                                <div style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>{icon} {init.name} <ExternalLink size={10} style={{ opacity: 0.4 }} /></div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{init.title} {init.owner ? `· ${init.owner}` : ''}</div>
+                                                <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, init.id)} title={archivedIds.includes(init.id) ? "Unarchive" : "Archive"}>
+                                                    <X size={14} />
+                                                </button>
+                                            </a>
+                                        );
+                                    })}
                                 </div>
                             )}
                             {inboxItems.overdue.length > 0 && (
@@ -474,7 +515,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         fontSize: '0.625rem', fontWeight: 700, flexShrink: 0
                                     }}>
-                                        {g.owner?.charAt(0) || '?'}
+                                        {String(g.owner || '?').charAt(0)}
                                     </div>
                                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
                                         {g.goalTitle}
@@ -576,22 +617,57 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         <button className="btn btn-icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
                             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                         </button>
-                        <Link
-                            href="/guide/future.html"
-                            className="fred-vision-link"
-                            title="Fred Pitch Hub & Future Vision"
-                            style={{
-                                width: '32px', height: '32px', borderRadius: '50%',
-                                background: 'var(--brand-primary)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 0 15px rgba(124, 58, 237, 0.3)',
-                                overflow: 'hidden',
-                                border: '1px solid rgba(255,255,255,0.1)'
-                            }}
-                        >
-                            <img src="/fred-3d-3.svg" alt="Fred Vision" style={{ width: '140%', height: '140%', objectFit: 'cover', objectPosition: 'center top', marginTop: '10%' }} />
-                        </Link>
+                        <div style={{ position: 'relative' }}>
+                            <button
+                                className="profile-btn"
+                                onClick={() => setProfileOpen(!profileOpen)}
+                                title="Profile & Settings"
+                                style={{
+                                    width: '32px', height: '32px', borderRadius: '50%',
+                                    background: 'var(--bg-tertiary)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    border: '1px solid var(--border-secondary)',
+                                    cursor: 'pointer',
+                                    padding: 0,
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                <img src="https://ca.slack-edge.com/T04KDQAB7-U0AE8QW3R89-fc012b06434b-512" alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.onerror = null; e.target.src = 'https://ui-avatars.com/api/?name=Mikey+Glenn&background=random'; }} />
+                            </button>
+
+                            {profileOpen && (
+                                <>
+                                    <div className="dropdown-overlay" onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000 }} />
+                                    <div className="profile-dropdown animate-in" style={{
+                                        position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                                        background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)',
+                                        border: '1px solid var(--border-primary)',
+                                        boxShadow: 'var(--shadow-lg)',
+                                        width: '240px', zIndex: 1001,
+                                        overflow: 'hidden'
+                                    }}>
+                                        <div style={{ padding: '16px', borderBottom: '1px solid var(--border-secondary)' }}>
+                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.875rem' }}>Mikey Glenn</div>
+                                            <div style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem', marginTop: '2px' }}>mikey@fireflies.ai</div>
+                                        </div>
+                                        <div style={{ padding: '8px' }}>
+                                            <button className="dropdown-item" onClick={() => { setProfileOpen(false); setSettingsOpen(true); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '0.8125rem', borderRadius: 'var(--radius-sm)', textAlign: 'left' }}>
+                                                <Settings size={16} style={{ color: 'var(--text-secondary)' }} />
+                                                Settings
+                                            </button>
+                                            <Link href="/guide/future.html" className="dropdown-item" onClick={() => setProfileOpen(false)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '0.8125rem', borderRadius: 'var(--radius-sm)', textDecoration: 'none' }}>
+                                                <HelpCircle size={16} style={{ color: 'var(--text-secondary)' }} />
+                                                Help Center (Fred Hub)
+                                            </Link>
+                                            <button className="dropdown-item" onClick={() => { setProfileOpen(false); alert('Signed out'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--signal-red)', fontSize: '0.8125rem', borderRadius: 'var(--radius-sm)', textAlign: 'left', marginTop: '4px' }}>
+                                                <LogOut size={16} />
+                                                Sign out
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -618,7 +694,16 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                         </div>
                     )
                 }
-            </main >
-        </div >
+            </main>
+
+            <DashboardSettings
+                isOpen={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                theme={theme}
+                toggleTheme={toggleTheme}
+                autoRefresh={autoRefresh}
+                setAutoRefresh={setAutoRefresh}
+            />
+        </div>
     );
 }

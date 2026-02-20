@@ -62,6 +62,52 @@ const tools = [
                     },
                 },
             },
+            {
+                name: "get_collaboration_details",
+                description: "Get specific collaborators and shared goals for a team member. Use this to answer 'Who is collaborating with Sam?'.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        name: { type: "STRING", description: "Name of the team member" },
+                    },
+                    required: ["name"],
+                },
+            },
+            {
+                name: "get_slippage_report",
+                description: "Get a summary of items that have passed their due date but are not completed. Can be filtered by department.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        department: { type: "STRING", description: "Optional department to filter by (e.g., 'Product', 'Marketing')" },
+                    },
+                },
+            },
+            {
+                name: "get_contributor_ranking",
+                description: "Rank individuals by their 'Supporting Contributor' effort (number of goals where they contribute but aren't the primary owner).",
+            },
+            {
+                name: "get_department_overview",
+                description: "Get health, slippage, and key blockers specifically for a department.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        department: { type: "STRING", description: "Name of the department" },
+                    },
+                    required: ["department"],
+                },
+            },
+            {
+                name: "get_goal_type_summary",
+                description: "Get a breakdown of goals by classification (Pebble vs Rock). Can be filtered by department. Use this to answer 'How many are under pebble and how many are under rock?' or 'What rocks in product need attention?'. It returns counts, percentages, and lists items needing attention (slipped/blocked).",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        department: { type: "STRING", description: "Optional department to filter by (e.g., 'Product', 'Marketing')" },
+                    },
+                },
+            },
         ],
     },
 ];
@@ -112,6 +158,21 @@ Every item and person gets a risk level based on these triggers:
 #### 4. Squad "Ownership Clarity"
 - The percentage of goals in a squad that have a specific **Owner** assigned vs "Unassigned".
 - Low clarity (<80%) usually predicts future slippage.
+
+#### 5. Slippage (The "Slipped" algorithm)
+- An item is marked as **Slipped** if its \`dueDate\` has passed AND its status is not completed.
+- We track \`slippageDays\` to see how far behind it is.
+
+#### 6. Collaboration (Lead vs. Support)
+- **Primary Owner**: The individual primarily responsible for the goal.
+- **Supporting Contributor**: Individuals helping on the goal. Use this to see team synergy and cross-pollination.
+- **Collaboration Pairs**: We track how often specific people work together. Use this for "Who does Punit work with most?".
+
+#### 7. Goal Classifications (Rocks vs. Pebbles)
+- Every goal is classified as either a **Rock** or a **Pebble** (or Unclassified).
+- **Rocks**: High-level, long-term strategic initiatives or major features.
+- **Pebbles**: Smaller tasks, tactical improvements, bug fixes, or minor tweaks.
+- Think of "Rocks" as the big things that move the needle, and "Pebbles" as the small things that fill the gaps.
 
 ### 🛠️ Your Tools & Capabilities
 - **get_dashboard_summary**: For high-level company pulse (Health Score, etc).
@@ -280,6 +341,136 @@ Always make your answer actionable with links:
                                 lastUpdated: g.lastUpdated,
                                 notionUrl: g.notionUrl,
                             }));
+                        break;
+                    }
+                    case "get_collaboration_details": {
+                        const { name } = args;
+                        const person = dashboard.individual?.[name];
+                        if (!person) {
+                            toolData = { error: `Could not find team member '${name}'. Try searching for their full name.` };
+                        } else {
+                            toolData = {
+                                name: person.name,
+                                topCollaborators: Object.entries(person.collaborators || {})
+                                    .sort((a, b) => b[1] - a[1])
+                                    .map(([name, count]) => ({ name, sharedGoals: count })),
+                                contributedTo: (person.contributedGoals || []).map(g => ({
+                                    goalTitle: g.goalTitle,
+                                    owner: g.owner,
+                                    status: g.status,
+                                    sourceUrl: g.sourceUrl || g.notionUrl
+                                }))
+                            };
+                        }
+                        break;
+                    }
+                    case "get_slippage_report": {
+                        const dept = args.department;
+                        let slipped = (dashboard.goals || []).filter(g => g.isSlipped);
+
+                        if (dept) {
+                            slipped = slipped.filter(g => g.department?.toLowerCase().includes(dept.toLowerCase()));
+                        }
+
+                        toolData = {
+                            totalSlipped: slipped.length,
+                            avgSlippageDays: Math.round(slipped.reduce((sum, g) => sum + (g.slippageDays || 0), 0) / (slipped.length || 1)),
+                            items: slipped.sort((a, b) => b.slippageDays - a.slippageDays).slice(0, 15).map(g => ({
+                                goalTitle: g.goalTitle,
+                                owner: g.owner,
+                                slippageDays: g.slippageDays,
+                                status: g.status,
+                                department: g.department,
+                                sourceUrl: g.sourceUrl || g.notionUrl
+                            }))
+                        };
+                        break;
+                    }
+                    case "get_contributor_ranking": {
+                        toolData = Object.values(dashboard.individual || {})
+                            .map(p => ({
+                                name: p.name,
+                                supportPoints: p.contributedGoals?.length || 0,
+                                primaryGoals: p.totalGoals || 0
+                            }))
+                            .sort((a, b) => b.supportPoints - a.supportPoints)
+                            .slice(0, 10);
+                        break;
+                    }
+                    case "get_department_overview": {
+                        const deptName = args.department;
+                        const deptGoals = (dashboard.goals || []).filter(g =>
+                            g.department?.toLowerCase().includes(deptName.toLowerCase())
+                        );
+
+                        if (deptGoals.length === 0) {
+                            toolData = { error: `No goals found for department '${deptName}'.` };
+                        } else {
+                            const completed = deptGoals.filter(g => ['done', 'complete', 'completed', 'shipped'].includes(g.status?.toLowerCase())).length;
+                            const overdue = deptGoals.filter(g => g.isSlipped).length;
+                            const blocked = deptGoals.filter(g => ['blocked', 'on hold', 'waiting'].includes(g.status?.toLowerCase())).length;
+                            const total = deptGoals.length;
+
+                            toolData = {
+                                department: deptName,
+                                totalGoals: total,
+                                completionRate: Math.round((completed / total) * 100) + "%",
+                                overdueCount: overdue,
+                                blockedCount: blocked,
+                                healthScore: Math.round(((completed * 0.4) + ((total - overdue) * 0.4) + ((total - blocked) * 0.2)) / total * 100),
+                                topItems: deptGoals.slice(0, 5).map(g => ({
+                                    goalTitle: g.goalTitle,
+                                    owner: g.owner,
+                                    status: g.status,
+                                    isSlipped: g.isSlipped
+                                }))
+                            };
+                        }
+                        break;
+                    }
+                    case "get_goal_type_summary": {
+                        let goals = dashboard.goals || [];
+                        const dept = args.department;
+
+                        if (dept) {
+                            goals = goals.filter(g => g.department?.toLowerCase().includes(dept.toLowerCase()));
+                        }
+
+                        const rocks = goals.filter(g => g.initiativeType?.toLowerCase() === 'rock');
+                        const pebbles = goals.filter(g => g.initiativeType?.toLowerCase() === 'pebble');
+                        const unclassified = goals.filter(g => !['rock', 'pebble'].includes(g.initiativeType?.toLowerCase()));
+
+                        const getAttentionItems = (list) => {
+                            return list.filter(g => g.isSlipped || ['blocked', 'on hold', 'waiting'].includes(g.status?.toLowerCase()))
+                                .map(g => ({
+                                    goalTitle: g.goalTitle,
+                                    owner: g.owner,
+                                    status: g.status,
+                                    isSlipped: g.isSlipped,
+                                    slippageDays: g.slippageDays,
+                                    sourceUrl: g.sourceUrl || g.notionUrl
+                                }));
+                        };
+
+                        toolData = {
+                            departmentFilter: dept || "All Departments",
+                            rocks: {
+                                count: rocks.length,
+                                percentage: goals.length > 0 ? Math.round((rocks.length / goals.length) * 100) + "%" : "0%",
+                                attentionItems: getAttentionItems(rocks)
+                            },
+                            pebbles: {
+                                count: pebbles.length,
+                                percentage: goals.length > 0 ? Math.round((pebbles.length / goals.length) * 100) + "%" : "0%",
+                                attentionItems: getAttentionItems(pebbles)
+                            },
+                            unclassified: {
+                                count: unclassified.length,
+                                percentage: goals.length > 0 ? Math.round((unclassified.length / goals.length) * 100) + "%" : "0%",
+                                attentionItems: getAttentionItems(unclassified)
+                            },
+                            total: goals.length
+                        };
                         break;
                     }
                     default:

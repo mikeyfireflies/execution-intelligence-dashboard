@@ -52,6 +52,9 @@ export function OwnerGrid({ owners, onRowClick }) {
                                 {data.role ? <span style={{ color: 'var(--brand-primary)' }}>{data.role}</span> : ''}
                                 {data.role ? ' • ' : ''}
                                 {data.totalGoals} goals
+                                {data.contributedGoals?.length > 0 && (
+                                    <span style={{ color: 'var(--signal-purple, #7C3AED)', marginLeft: '6px' }}>+{data.contributedGoals.length} contributing</span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -379,6 +382,26 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                                                         <Clock size={10} /> {goal.dueDate}
                                                     </span>
                                                 )}
+                                                {goal.contributors?.length > 0 && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                                                        <span style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)', marginRight: '2px' }}>Contributors:</span>
+                                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                            {goal.contributors.map((name, idx) => (
+                                                                <div key={idx} title={name} style={{
+                                                                    width: '18px', height: '18px', borderRadius: '50%',
+                                                                    background: 'var(--bg-secondary)', color: 'var(--brand-primary)',
+                                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                    fontSize: '0.6rem', fontWeight: 700,
+                                                                    border: '1px solid var(--border-primary)',
+                                                                    marginLeft: idx > 0 ? '-6px' : 0,
+                                                                    zIndex: 10 - idx
+                                                                }}>
+                                                                    {String(name || '?').charAt(0)}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 {group === 'Completed' && (
                                                     <>
                                                         {goal.wasCritical && (
@@ -398,6 +421,80 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                         )
                     ))}
                 </div>
+
+                {/* Contributing To Section */}
+                {data.contributedGoals?.length > 0 && (
+                    <div style={{ marginTop: 'var(--space-lg)' }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <ArrowUpRight size={14} style={{ color: 'var(--signal-purple, #7C3AED)' }} />
+                            Contributing To ({data.contributedGoals.length})
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {data.contributedGoals.map((goal, i) => (
+                                <div key={i} className="card" style={{
+                                    padding: '10px 14px', display: 'flex',
+                                    justifyContent: 'space-between', alignItems: 'center',
+                                    borderLeft: '3px solid var(--signal-purple, #7C3AED)'
+                                }}>
+                                    <div style={{ minWidth: 0, flex: 1 }}>
+                                        <div style={{ fontWeight: 500, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            <a href={goal.notionUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                                {goal.goalTitle}
+                                            </a>
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                                            Owner: {goal.owner} {goal.dueDate ? `· Due: ${goal.dueDate}` : ''}
+                                        </div>
+                                    </div>
+                                    <span className="badge badge-neutral" style={{ fontSize: '0.65rem', flexShrink: 0 }}>{goal.status}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Collaborators Section */}
+                {Object.keys(data.collaborators || {}).length > 0 && (
+                    <div style={{ marginTop: 'var(--space-lg)' }}>
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
+                            color: 'var(--text-secondary)'
+                        }}>
+                            <Building2 size={14} style={{ color: 'var(--brand-primary)' }} />
+                            Collaborators
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            {Object.entries(data.collaborators)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([name, count]) => (
+                                    <div key={name} style={{
+                                        display: 'flex', alignItems: 'center', gap: '8px',
+                                        padding: '8px 12px', borderRadius: 'var(--radius-md)',
+                                        background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
+                                        fontSize: '0.8125rem'
+                                    }}>
+                                        <div style={{
+                                            width: '24px', height: '24px', borderRadius: '50%',
+                                            background: 'var(--bg-secondary)', color: 'var(--brand-primary)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: '0.6875rem', fontWeight: 700, flexShrink: 0
+                                        }}>
+                                            {String(name || '?').charAt(0)}
+                                        </div>
+                                        <span style={{ fontWeight: 500 }}>{name}</span>
+                                        <span className="badge badge-neutral" style={{ fontSize: '0.6rem', padding: '1px 6px' }}>
+                                            {count} shared
+                                        </span>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -555,7 +652,7 @@ export function SquadDetailPanel({ squadName, data, onClose }) {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                                     <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', color: 'var(--brand-primary)', border: '1px solid var(--border-primary)' }}>
-                                                        {goal.owner?.charAt(0) || '?'}
+                                                        {String(goal.owner || '?').charAt(0)}
                                                     </div>
                                                     <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{goal.owner || 'Unassigned'}</span>
                                                 </div>

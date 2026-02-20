@@ -12,6 +12,7 @@ export default function ExecutivePage() {
                     <ExecutiveView
                         data={data?.executive}
                         company={data?.company}
+                        goals={data?.goals}
                     />
                 )}
             </DashboardClient>
