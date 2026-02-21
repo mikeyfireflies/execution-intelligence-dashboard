@@ -5,8 +5,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
     Users, Building2, BarChart3, Eye, RefreshCw, Sun, Moon,
     AlertTriangle, X, PanelLeftClose, PanelLeftOpen, Home, Bell, Search,
-    Clock, ExternalLink, ChevronDown, ChevronRight,
-    LogOut, Settings, HelpCircle, User
+    Clock, ExternalLink, ChevronDown, ChevronRight, ChevronUp, Maximize2, Minimize2,
+    LogOut, Settings, HelpCircle, User, Filter, ArrowUpDown, List,
+    Sparkles, MessageSquare, CheckCircle, MoreHorizontal
 } from 'lucide-react';
 import Link from 'next/link';
 import FredChat from './FredChat';
@@ -108,13 +109,25 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
     const [fredOpen, setFredOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsTab, setSettingsTab] = useState('appearance');
 
     const [inboxOpen, setInboxOpen] = useState(false);
     const [recentsOpen, setRecentsOpen] = useState(true);
     const pathname = usePathname();
     const currentView = pathname.split('/').pop() || 'individual';
 
-    const [inboxFilter, setInboxFilter] = useState('unread_read');
+    const [inboxTab, setInboxTab] = useState('activity');
+    const [inboxDensity, setInboxDensity] = useState('detailed');
+    const [inboxSort, setInboxSort] = useState('newest');
+    const [inboxFilter, setInboxFilter] = useState('all');
+
+    // Summary State
+    const [summaryState, setSummaryState] = useState('idle');
+    const [summaryText, setSummaryText] = useState('');
+    const [summaryExpanded, setSummaryExpanded] = useState(true);
+    const [summaryTimeframe, setSummaryTimeframe] = useState('Past week');
+    const [summaryMenuOpen, setSummaryMenuOpen] = useState(false);
+    const [toolbarMenuOpen, setToolbarMenuOpen] = useState(false);
     const [archivedIds, setArchivedIds] = useState([]);
     const [readIds, setReadIds] = useState([]);
 
@@ -209,12 +222,17 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
         const filterFn = (item) => {
             const id = item.id || item.goalTitle || item.name;
             const isArchived = archivedIds.includes(id);
-            const isRead = readIds.includes(id);
 
-            if (inboxFilter === 'archived') return isArchived;
-            if (inboxFilter === 'unread') return !isArchived && !isRead;
-            if (inboxFilter === 'all') return true;
-            return !isArchived; // 'unread_read' basically hides archived
+            if (inboxTab === 'archive') return isArchived;
+            if (inboxTab === 'bookmarks') return false; // Bookmarks not fully implemented yet
+
+            // Activity tab logic
+            if (isArchived) return false;
+
+            const isRead = readIds.includes(id);
+            if (inboxFilter === 'unread') return !isRead;
+
+            return true;
         };
 
         return {
@@ -224,7 +242,7 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
             recentlyCompleted: rawInboxItems.recentlyCompleted.filter(filterFn),
             initiativeAlerts: rawInboxItems.initiativeAlerts.filter(filterFn),
         };
-    }, [rawInboxItems, inboxFilter, archivedIds, readIds]);
+    }, [rawInboxItems, inboxTab, inboxFilter, archivedIds, readIds]);
 
     const totalInboxCount = inboxItems.overdue.filter(i => !readIds.includes(i.id || i.goalTitle)).length +
         inboxItems.blocked.filter(i => !readIds.includes(i.id || i.goalTitle)).length +
@@ -240,6 +258,33 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
             .slice(0, 5);
     }, [data]);
 
+    const fetchFredSummary = async () => {
+        setSummaryState('loading');
+        setSummaryExpanded(true);
+        try {
+            const dataToSummarize = {
+                riskAlerts: inboxItems.riskAlerts || [],
+                overdue: inboxItems.overdue || [],
+                blocked: inboxItems.blocked || [],
+                initiativeAlerts: inboxItems.initiativeAlerts || []
+            };
+            const prompt = `You are Fred, generating an 'Inbox Summary'. Summarize the current execution bottlenecks from the ${summaryTimeframe}. Focus on critical Risk Alerts, Blocked Items, and Overdue items. Data: ${JSON.stringify(dataToSummarize).substring(0, 1500)}`;
+
+            const response = await fetch('/api/fred/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] })
+            });
+            const chatData = await response.json();
+            setSummaryText(chatData.content || "Empty response from Fred.");
+            setSummaryState('success');
+        } catch (error) {
+            console.error(error);
+            setSummaryState('error');
+            setSummaryText("Failed to generate summary. Please try again.");
+        }
+    };
+
     const navItems = [
         { id: 'individual', label: 'Individual', icon: Users, desc: 'Per-person execution', path: '/individual' },
         { id: 'squads', label: 'Squads', icon: Building2, desc: 'Squad rollups', path: '/squads' },
@@ -254,126 +299,253 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
             {/* Inbox Slide-out Panel */}
             {inboxOpen && (
                 <div className="detail-panel-overlay" onClick={() => setInboxOpen(false)} style={{ zIndex: 1100 }}>
-                    <div className="detail-panel animate-in-right" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
-                        <div className="detail-header">
-                            <div>
-                                <h2 style={{ margin: 0, fontSize: '1.125rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Bell size={18} style={{ color: 'var(--brand-primary)' }} />
-                                    Inbox
-                                    {totalInboxCount > 0 && (
-                                        <span style={{ background: 'var(--signal-red)', color: 'white', borderRadius: '10px', padding: '1px 8px', fontSize: '0.7rem', fontWeight: 700 }}>{totalInboxCount}</span>
-                                    )}
-                                </h2>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>Recent activity across your workspace</div>
+                    <div className="detail-panel animate-in-right inbox-panel" onClick={e => e.stopPropagation()}>
+
+                        {/* Header & Tabs */}
+                        <div className="inbox-header-area">
+                            <div className="inbox-header-top">
+                                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>Inbox</h2>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button className="btn btn-secondary" onClick={() => { setSettingsTab('inbox'); setSettingsOpen(true); }} style={{ fontSize: '0.75rem', padding: '6px 12px' }}>Manage notifications</button>
+                                    <button className="btn btn-ghost" onClick={() => setInboxOpen(false)} style={{ padding: '4px' }}><X size={20} /></button>
+                                </div>
                             </div>
-                            <button className="btn btn-ghost" onClick={() => setInboxOpen(false)}><X size={20} /></button>
+                            <div className="inbox-tabs">
+                                <button className={`inbox-tab ${inboxTab === 'activity' ? 'active' : ''}`} onClick={() => setInboxTab('activity')}>Activity</button>
+                                <button className={`inbox-tab ${inboxTab === 'bookmarks' ? 'active' : ''}`} onClick={() => setInboxTab('bookmarks')}>Bookmarks</button>
+                                <button className={`inbox-tab ${inboxTab === 'archive' ? 'active' : ''}`} onClick={() => setInboxTab('archive')}>Archive</button>
+                            </div>
                         </div>
-                        <div className="detail-content" style={{ fontSize: '0.8125rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                                <select
-                                    className="inbox-filter-select"
-                                    value={inboxFilter}
-                                    onChange={e => setInboxFilter(e.target.value)}
-                                    style={{ padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '0.75rem', outline: 'none', cursor: 'pointer' }}
-                                >
-                                    <option value="unread_read">Unread & read</option>
-                                    <option value="unread">Unread</option>
-                                    <option value="archived">Archived</option>
-                                    <option value="all">All workspace updates</option>
-                                </select>
-                                {inboxFilter !== 'archived' && (
-                                    <button className="btn btn-ghost" onClick={() => archiveAllObj(inboxItems)} style={{ fontSize: '0.75rem', padding: '4px 8px', color: 'var(--text-secondary)' }}>
-                                        Archive all
+
+                        {/* Toolbar */}
+                        <div className="inbox-toolbar">
+                            <div className="inbox-toolbar-left">
+                                <button className="inbox-toolbar-btn" onClick={() => setInboxFilter(inboxFilter === 'all' ? 'unread' : 'all')}>
+                                    <Filter size={14} /> Filter {inboxFilter === 'unread' ? '(Unread only)' : ''}
+                                </button>
+                                <button className="inbox-toolbar-btn" onClick={() => setInboxSort(inboxSort === 'newest' ? 'relevance' : 'newest')}>
+                                    <ArrowUpDown size={14} /> Sort: {inboxSort === 'newest' ? 'Newest' : 'Relevance'}
+                                </button>
+                                <button className="inbox-toolbar-btn" onClick={() => setInboxDensity(inboxDensity === 'detailed' ? 'compact' : 'detailed')}>
+                                    <List size={14} /> Density: {inboxDensity === 'detailed' ? 'Detailed' : 'Compact'}
+                                </button>
+                            </div>
+                            <div className="inbox-toolbar-right" style={{ position: 'relative' }}>
+                                <button className="btn btn-ghost" onClick={() => setToolbarMenuOpen(!toolbarMenuOpen)} style={{ padding: '4px' }}>
+                                    <MoreHorizontal size={16} />
+                                </button>
+                                {toolbarMenuOpen && (
+                                    <>
+                                        <div className="dropdown-overlay" onClick={() => setToolbarMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
+                                        <div className="dropdown-menu animate-in" style={{ position: 'absolute', top: '100%', right: 0, marginTop: '4px', zIndex: 101, width: '200px', background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '4px', boxShadow: 'var(--shadow-md)' }}>
+                                            <button className="dropdown-item" onClick={() => { setToolbarMenuOpen(false); fetchFredSummary(); }} style={{ fontSize: '0.8125rem', width: '100%', textAlign: 'left', padding: '6px 8px', background: 'var(--brand-primary-light)', color: 'var(--brand-primary)', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span>Inbox AI summary</span><span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'var(--brand-primary)', color: 'white', borderRadius: '4px' }}>New</span>
+                                            </button>
+                                            <button className="dropdown-item" onClick={() => { setToolbarMenuOpen(false); setInboxDensity('detailed'); }} style={{ fontSize: '0.8125rem', width: '100%', textAlign: 'left', padding: '6px 8px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer', marginTop: '4px' }}>Expand notifications</button>
+                                            <button className="dropdown-item" onClick={() => { setToolbarMenuOpen(false); archiveAllObj(inboxItems); }} style={{ fontSize: '0.8125rem', width: '100%', textAlign: 'left', padding: '6px 8px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer' }}>Archive all</button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="detail-content" style={{ padding: '0', background: 'var(--bg-tertiary)' }}>
+
+                            <div style={{ padding: '24px' }}>
+                                {/* Fred AI Summary Card - Only on Activity tab */}
+                                {inboxTab === 'activity' && (
+                                    <div className="inbox-summary-card" style={{ marginBottom: '24px', position: 'relative', overflow: 'hidden', padding: '20px' }}>
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'linear-gradient(90deg, #7C3AED, #00CEC9)' }}></div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ width: '100%' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                                    <Sparkles size={16} style={{ color: 'var(--signal-purple)' }} />
+                                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>Inbox Summary - {summaryTimeframe}</span>
+                                                    {summaryState === 'success' && <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '8px' }}>Last updated just now</span>}
+                                                </div>
+
+                                                {summaryExpanded && (
+                                                    <div className="inbox-summary-content" style={{ marginBottom: '16px' }}>
+                                                        {summaryState === 'idle' && <p>Summarize your most important and actionable notifications with Fred AI.</p>}
+                                                        {summaryState === 'loading' && (
+                                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                <div className="loading-pulse" style={{ height: '14px', width: '90%', background: 'var(--bg-secondary)', borderRadius: '4px' }}></div>
+                                                                <div className="loading-pulse" style={{ height: '14px', width: '80%', background: 'var(--bg-secondary)', borderRadius: '4px' }}></div>
+                                                                <div className="loading-pulse" style={{ height: '14px', width: '85%', background: 'var(--bg-secondary)', borderRadius: '4px' }}></div>
+                                                            </div>
+                                                        )}
+                                                        {summaryState === 'success' && (
+                                                            <div dangerouslySetInnerHTML={{
+                                                                __html: summaryText
+                                                                    // Parse links [text](url)
+                                                                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                                                                    // Parse bold **text**
+                                                                    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                                                                    // Parse newlines as paragraphs/breaks
+                                                                    .split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br/>')}</p>`).join('')
+                                                            }} />
+                                                        )}
+                                                        {summaryState === 'error' && <span style={{ color: 'var(--signal-red)' }}>{summaryText}</span>}
+                                                    </div>
+                                                )}
+
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: summaryExpanded ? '16px' : '0' }}>
+                                                    <select value={summaryTimeframe} onChange={e => { setSummaryTimeframe(e.target.value); if (summaryState === 'success') fetchFredSummary(); }} style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem', background: summaryExpanded ? 'transparent' : 'var(--bg-secondary)', border: '1px solid var(--border-secondary)', color: summaryExpanded ? 'var(--text-tertiary)' : 'var(--text-primary)', outline: 'none', cursor: 'pointer', transition: 'all 0.2s ease' }}>
+                                                        <option value="Past 24 hours">Past 24 hours</option>
+                                                        <option value="Past 3 days">Past 3 days</option>
+                                                        <option value="Past week">Past week</option>
+                                                        <option value="Past 2 weeks">Past 2 weeks</option>
+                                                    </select>
+                                                    {summaryState === 'idle' && (
+                                                        <button className="btn btn-secondary" onClick={fetchFredSummary} style={{ fontSize: '0.75rem', padding: '6px 12px' }}>Generate summary</button>
+                                                    )}
+                                                    {summaryState === 'success' && summaryExpanded && (
+                                                        <button className="btn btn-ghost" onClick={fetchFredSummary} style={{ fontSize: '0.75rem', padding: '4px 8px' }}><RefreshCw size={12} style={{ marginRight: '4px' }} /> Regenerate</button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '4px', position: 'relative' }}>
+                                                <button className="btn btn-ghost" onClick={() => setSummaryExpanded(!summaryExpanded)} style={{ padding: '4px', color: 'var(--text-tertiary)' }} title={summaryExpanded ? "Collapse" : "Expand"}>
+                                                    {summaryExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                                                </button>
+                                                <button className="btn btn-ghost" onClick={() => setSummaryMenuOpen(!summaryMenuOpen)} style={{ padding: '4px', color: 'var(--text-tertiary)' }} title="Close or Options"><X size={16} /></button>
+                                                {summaryMenuOpen && (
+                                                    <>
+                                                        <div className="dropdown-overlay" onClick={() => setSummaryMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 100 }} />
+                                                        <div className="dropdown-menu animate-in" style={{ position: 'absolute', top: '100%', right: 0, zIndex: 101, background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)', borderRadius: 'var(--radius-md)', padding: '4px', boxShadow: 'var(--shadow-md)', width: '160px' }}>
+                                                            <button className="dropdown-item" onClick={() => { setSummaryMenuOpen(false); setSummaryState('idle'); setSummaryText(''); setSummaryExpanded(true); }} style={{ fontSize: '0.8125rem', width: '100%', textAlign: 'left', padding: '6px 8px', background: 'transparent', color: 'var(--text-primary)', border: 'none', cursor: 'pointer' }}>Dismiss Summary</button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>Today</div>
+
+                                {/* Notifications List */}
+                                <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border-secondary)' }}>
+
+                                    {/* Risk Alerts */}
+                                    {inboxItems.riskAlerts.map((a, i) => (
+                                        <div key={`risk-${i}`} className={`asana-inbox-item ${readIds.includes(a.id) ? 'read' : ''}`} onClick={() => markRead(a.id)}>
+                                            {!readIds.includes(a.id) && <div className="asana-item-dot unread" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '6px' }} />}
+                                            <div className="asana-item-icon" style={{ background: 'var(--signal-red-bg)', color: 'var(--signal-red)' }}>🔴</div>
+                                            <div className="asana-item-content">
+                                                <div className="asana-item-header">
+                                                    <div className="asana-item-title">Risk Alert: {a.name}</div>
+                                                    <div className="asana-item-time">2 hours ago</div>
+                                                </div>
+                                                {inboxDensity === 'detailed' && <div className="asana-item-desc">Critical issues affecting execution momentum. {a.overdue} overdue, {a.blocked} blocked out of {a.totalGoals} goals.</div>}
+                                                <div className="asana-item-meta">
+                                                    <span>Workspace Alert</span>
+                                                </div>
+                                            </div>
+                                            <div className="asana-item-actions">
+                                                <button className="asana-action-btn" title="Mark as read"><CheckCircle size={14} /></button>
+                                                <button className="asana-action-btn" onClick={(e) => toggleArchive(e, a.id)} title={inboxTab === 'archive' ? "Unarchive" : "Archive"}><X size={14} /></button>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Initiative Alerts */}
+                                    {inboxItems.initiativeAlerts.map((init, i) => {
+                                        let icon = '🟡';
+                                        let bg = 'var(--signal-amber-bg)';
+                                        if (init.alertType === 'slipped') { icon = '🔴'; bg = 'var(--signal-red-bg)'; }
+                                        else if (init.alertType === 'stale') { icon = '⏰'; bg = 'var(--bg-tertiary)'; }
+
+                                        return (
+                                            <a href={init.notionUrl} target="_blank" rel="noopener noreferrer" key={`init-${i}`} className={`asana-inbox-item ${readIds.includes(init.id) ? 'read' : ''}`} onClick={() => markRead(init.id)}>
+                                                {!readIds.includes(init.id) && <div className="asana-item-dot unread" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '6px' }} />}
+                                                <div className="asana-item-icon" style={{ background: bg }}>{icon}</div>
+                                                <div className="asana-item-content">
+                                                    <div className="asana-item-header">
+                                                        <div className="asana-item-title">{init.name} <ExternalLink size={12} style={{ color: 'var(--text-tertiary)' }} /></div>
+                                                        <div className="asana-item-time">4 hours ago</div>
+                                                    </div>
+                                                    {inboxDensity === 'detailed' && <div className="asana-item-desc">{init.title}</div>}
+                                                    <div className="asana-item-meta">
+                                                        <span>{init.owner || 'Unassigned'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="asana-item-actions">
+                                                    <button className="asana-action-btn" onClick={(e) => { e.preventDefault(); toggleArchive(e, init.id); }} title={inboxTab === 'archive' ? "Unarchive" : "Archive"}><X size={14} /></button>
+                                                </div>
+                                            </a>
+                                        );
+                                    })}
+
+                                    {/* Blocked Items */}
+                                    {inboxItems.blocked.map((g, i) => (
+                                        <a href={g.sourceUrl || g.notionUrl} target="_blank" rel="noopener noreferrer" key={`block-${i}`} className={`asana-inbox-item ${readIds.includes(g.id || g.goalTitle) ? 'read' : ''}`} onClick={() => markRead(g.id || g.goalTitle)}>
+                                            {!readIds.includes(g.id || g.goalTitle) && <div className="asana-item-dot unread" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '6px' }} />}
+                                            <div className="asana-item-icon" style={{ background: 'var(--signal-amber-bg)', color: 'var(--signal-amber)' }}>🚧</div>
+                                            <div className="asana-item-content">
+                                                <div className="asana-item-header">
+                                                    <div className="asana-item-title">{g.goalTitle} <ExternalLink size={12} style={{ color: 'var(--text-tertiary)' }} /></div>
+                                                    <div className="asana-item-time">5 hours ago</div>
+                                                </div>
+                                                {inboxDensity === 'detailed' && <div className="asana-item-desc">Status changed to Blocked. Requires immediate attention.</div>}
+                                                <div className="asana-item-meta">
+                                                    <span>{g.owner}</span>
+                                                </div>
+                                            </div>
+                                            <div className="asana-item-actions">
+                                                <button className="asana-action-btn" onClick={(e) => { e.preventDefault(); toggleArchive(e, g.id || g.goalTitle); }} title={inboxTab === 'archive' ? "Unarchive" : "Archive"}><X size={14} /></button>
+                                            </div>
+                                        </a>
+                                    ))}
+
+                                    {/* Overdue Items */}
+                                    {inboxItems.overdue.map((g, i) => (
+                                        <a href={g.sourceUrl || g.notionUrl} target="_blank" rel="noopener noreferrer" key={`overdue-${i}`} className={`asana-inbox-item ${readIds.includes(g.id || g.goalTitle) ? 'read' : ''}`} onClick={() => markRead(g.id || g.goalTitle)}>
+                                            {!readIds.includes(g.id || g.goalTitle) && <div className="asana-item-dot unread" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '6px' }} />}
+                                            <div className="asana-item-icon" style={{ background: 'var(--signal-red-bg)', color: 'var(--signal-red)' }}>⏰</div>
+                                            <div className="asana-item-content">
+                                                <div className="asana-item-header">
+                                                    <div className="asana-item-title">{g.goalTitle} <ExternalLink size={12} style={{ color: 'var(--text-tertiary)' }} /></div>
+                                                    <div className="asana-item-time">1 day ago</div>
+                                                </div>
+                                                {inboxDensity === 'detailed' && <div className="asana-item-desc">Deadline missed. Target was {g.dueDate}.</div>}
+                                                <div className="asana-item-meta">
+                                                    <span>{g.owner}</span>
+                                                </div>
+                                            </div>
+                                            <div className="asana-item-actions">
+                                                <button className="asana-action-btn" onClick={(e) => { e.preventDefault(); toggleArchive(e, g.id || g.goalTitle); }} title={inboxTab === 'archive' ? "Unarchive" : "Archive"}><X size={14} /></button>
+                                            </div>
+                                        </a>
+                                    ))}
+
+                                    {/* Empty State if Everything Empty */}
+                                    {inboxItems.riskAlerts.length === 0 && inboxItems.initiativeAlerts.length === 0 && inboxItems.overdue.length === 0 && inboxItems.blocked.length === 0 && (
+                                        <div className="asana-inbox-item" style={{ padding: '32px 24px', cursor: 'default' }}>
+                                            <div className="asana-item-icon" style={{ background: 'transparent', overflow: 'hidden' }}>
+                                                <img src="/fred-icon.svg" alt="" style={{ width: '28px', height: '28px' }} />
+                                            </div>
+                                            <div className="asana-item-content">
+                                                <div className="asana-item-title" style={{ marginBottom: '8px' }}><MessageSquare size={14} /> Teamwork makes work happen!</div>
+                                                <div className="asana-item-desc" style={{ color: 'var(--text-primary)' }}>
+                                                    Inbox is where you get updates, notifications, and messages from your teammates. Send an invite to start collaborating.
+                                                </div>
+                                                <div style={{ marginTop: '16px' }}>
+                                                    <button className="btn btn-secondary" style={{ fontSize: '0.75rem', padding: '6px 12px' }}>Copy invite link</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                </div>
+
+                                {inboxTab !== 'archive' && (
+                                    <button className="btn btn-ghost" onClick={() => archiveAllObj(inboxItems)} style={{ fontSize: '0.75rem', padding: '8px 0', color: 'var(--brand-primary)', marginTop: '24px', fontWeight: 500 }}>
+                                        Archive all notifications
                                     </button>
                                 )}
                             </div>
 
-                            {inboxItems.riskAlerts.length > 0 && (
-                                <div style={{ marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-red)', marginBottom: '8px' }}>🔴 Risk Alerts</div>
-                                    {inboxItems.riskAlerts.map((a, i) => (
-                                        <div key={i} className={`card inbox-card ${readIds.includes(a.id) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', borderLeft: '3px solid var(--signal-red)', position: 'relative' }} onClick={() => markRead(a.id)}>
-                                            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{a.name}</div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{a.overdue} overdue · {a.blocked} blocked · {a.totalGoals} total goals</div>
-                                            <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, a.id)} title={archivedIds.includes(a.id) ? "Unarchive" : "Archive"}>
-                                                <X size={14} />
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {inboxItems.initiativeAlerts && inboxItems.initiativeAlerts.length > 0 && (
-                                <div style={{ marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-amber)', marginBottom: '8px' }}>🎯 Initiative Alerts</div>
-                                    {inboxItems.initiativeAlerts.map((init, i) => {
-                                        let borderColor = 'var(--border-secondary)';
-                                        let icon = '';
-                                        if (init.alertType === 'slipped') { borderColor = 'var(--signal-red)'; icon = '🔴'; }
-                                        else if (init.alertType === 'gap') { borderColor = 'var(--signal-amber)'; icon = '🟡'; }
-                                        else if (init.alertType === 'stale') { borderColor = 'var(--signal-amber)'; icon = '⏰'; }
-
-                                        return (
-                                            <a key={i} href={init.notionUrl} target="_blank" rel="noopener noreferrer" className={`card inbox-card ${readIds.includes(init.id) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', display: 'block', textDecoration: 'none', borderLeft: `3px solid ${borderColor}`, cursor: 'pointer', position: 'relative' }} onClick={() => markRead(init.id)}>
-                                                <div style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>{icon} {init.name} <ExternalLink size={10} style={{ opacity: 0.4 }} /></div>
-                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{init.title} {init.owner ? `· ${init.owner}` : ''}</div>
-                                                <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, init.id)} title={archivedIds.includes(init.id) ? "Unarchive" : "Archive"}>
-                                                    <X size={14} />
-                                                </button>
-                                            </a>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                            {inboxItems.overdue.length > 0 && (
-                                <div style={{ marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-red)', marginBottom: '8px' }}>⏰ Overdue</div>
-                                    {inboxItems.overdue.map((g, i) => (
-                                        <a key={i} href={g.sourceUrl || g.notionUrl} target="_blank" rel="noopener noreferrer" className={`card inbox-card ${readIds.includes(g.id || g.goalTitle) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', display: 'block', textDecoration: 'none', borderLeft: '3px solid var(--signal-red)', cursor: 'pointer', position: 'relative' }} onClick={() => markRead(g.id || g.goalTitle)}>
-                                            <div style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>{g.goalTitle} <ExternalLink size={10} style={{ opacity: 0.4 }} /></div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{g.owner} · Due {g.dueDate}</div>
-                                            <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, g.id || g.goalTitle)} title={archivedIds.includes(g.id || g.goalTitle) ? "Unarchive" : "Archive"}>
-                                                <X size={14} />
-                                            </button>
-                                        </a>
-                                    ))}
-                                </div>
-                            )}
-                            {inboxItems.blocked.length > 0 && (
-                                <div style={{ marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-amber)', marginBottom: '8px' }}>🚧 Blocked</div>
-                                    {inboxItems.blocked.map((g, i) => (
-                                        <a key={i} href={g.sourceUrl || g.notionUrl} target="_blank" rel="noopener noreferrer" className={`card inbox-card ${readIds.includes(g.id || g.goalTitle) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', display: 'block', textDecoration: 'none', borderLeft: '3px solid var(--signal-amber)', cursor: 'pointer', position: 'relative' }} onClick={() => markRead(g.id || g.goalTitle)}>
-                                            <div style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>{g.goalTitle} <ExternalLink size={10} style={{ opacity: 0.4 }} /></div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{g.owner} · {g.status}</div>
-                                            <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, g.id || g.goalTitle)} title={archivedIds.includes(g.id || g.goalTitle) ? "Unarchive" : "Archive"}>
-                                                <X size={14} />
-                                            </button>
-                                        </a>
-                                    ))}
-                                </div>
-                            )}
-                            {inboxItems.recentlyCompleted.length > 0 && (
-                                <div style={{ marginBottom: '20px' }}>
-                                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--signal-green)', marginBottom: '8px' }}>✅ Recently Completed</div>
-                                    {inboxItems.recentlyCompleted.map((g, i) => (
-                                        <a key={i} href={g.sourceUrl || g.notionUrl} target="_blank" rel="noopener noreferrer" className={`card inbox-card ${readIds.includes(g.id || g.goalTitle) ? 'read' : ''}`} style={{ padding: '10px 12px', marginBottom: '6px', display: 'block', textDecoration: 'none', borderLeft: '3px solid var(--signal-green)', cursor: 'pointer', position: 'relative' }} onClick={() => markRead(g.id || g.goalTitle)}>
-                                            <div style={{ fontWeight: 500, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>{g.goalTitle} <ExternalLink size={10} style={{ opacity: 0.4 }} /></div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{g.owner}</div>
-                                            <button className="inbox-archive-btn" onClick={(e) => toggleArchive(e, g.id || g.goalTitle)} title={archivedIds.includes(g.id || g.goalTitle) ? "Unarchive" : "Archive"}>
-                                                <X size={14} />
-                                            </button>
-                                        </a>
-                                    ))}
-                                </div>
-                            )}
-                            {inboxItems.riskAlerts.length === 0 && inboxItems.overdue.length === 0 && inboxItems.blocked.length === 0 && inboxItems.recentlyCompleted.length === 0 && (
-                                <div className="empty-state" style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, marginBottom: '16px' }}><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    <div style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>You're all caught up</div>
-                                    <button className="btn btn-secondary" style={{ marginTop: '12px', fontSize: '0.75rem', padding: '6px 12px' }} onClick={() => setInboxFilter('all')}>View all</button>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
@@ -703,6 +875,8 @@ export default function DashboardLayout({ children, loading, lastFetched, fetchD
                 toggleTheme={toggleTheme}
                 autoRefresh={autoRefresh}
                 setAutoRefresh={setAutoRefresh}
+                activeTab={settingsTab}
+                setActiveTab={setSettingsTab}
             />
         </div>
     );

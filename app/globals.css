@@ -801,6 +801,226 @@ h4 {
   border: 1px solid var(--signal-red-border);
 }
 
+/* ─── Inbox Overhaul ───────────────────────────────── */
+.inbox-panel {
+  width: 650px;
+  max-width: 100vw;
+}
+
+.inbox-header-area {
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.inbox-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.inbox-tabs {
+  display: flex;
+  gap: 24px;
+}
+
+.inbox-tab {
+  background: none;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 0 0 12px 0;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.inbox-tab:hover {
+  color: var(--text-primary);
+}
+
+.inbox-tab.active {
+  color: var(--text-primary);
+}
+
+.inbox-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.inbox-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border-secondary);
+  background: var(--bg-primary);
+}
+
+.inbox-toolbar-left,
+.inbox-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.inbox-toolbar-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.inbox-toolbar-btn:hover {
+  color: var(--text-primary);
+}
+
+.inbox-summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+}
+
+.asana-inbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-secondary);
+  background: var(--bg-primary);
+  transition: background 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+}
+
+.asana-inbox-item:hover {
+  background: var(--bg-secondary);
+}
+
+.asana-inbox-item:hover .asana-item-actions {
+  opacity: 1;
+}
+
+.asana-inbox-item.read {
+  opacity: 0.6;
+}
+
+.asana-item-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.asana-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.asana-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.asana-item-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.asana-item-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.asana-item-dot.unread {
+  background: var(--brand-primary);
+}
+
+.asana-item-time {
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.asana-item-desc {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.asana-item-meta {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  display: flex;
+  gap: 12px;
+}
+
+.asana-item-actions {
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-secondary);
+}
+
+.asana-action-btn {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.asana-action-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
 .badge-neutral {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
@@ -1830,4 +2050,61 @@ html {
 /* Hydration Fix */
 .antigravity-scroll-lock {
   overflow: hidden !important;
+}
+
+/* ─── Inbox Summary Refinements ───────────────────── */
+.inbox-summary-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.inbox-summary-card select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  padding-right: 28px !important;
+}
+
+/* Markdown Rendering in Summary */
+.inbox-summary-content {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.inbox-summary-content a {
+  color: var(--brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.inbox-summary-content a:hover {
+  text-decoration: underline;
+}
+
+.inbox-summary-content strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.inbox-summary-content ul,
+.inbox-summary-content ol {
+  padding-left: 20px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.inbox-summary-content p {
+  margin-bottom: 12px;
+}
+
+.inbox-summary-content p:last-child {
+  margin-bottom: 0;
 }

@@ -3,8 +3,8 @@
 import { X, Moon, Sun, Bell, RefreshCw, LayoutDashboard } from 'lucide-react';
 import { useState } from 'react';
 
-export default function DashboardSettings({ isOpen, onClose, theme, toggleTheme, autoRefresh, setAutoRefresh }) {
-    const [activeTab, setActiveTab] = useState('appearance');
+export default function DashboardSettings({ isOpen, onClose, theme, toggleTheme, autoRefresh, setAutoRefresh, activeTab = 'appearance', setActiveTab }) {
+    if (!isOpen) return null;
 
     if (!isOpen) return null;
 

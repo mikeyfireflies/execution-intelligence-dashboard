@@ -121,6 +121,7 @@ export default function DashboardClient({ children }) {
                         const isCompleted = ['done', 'complete', 'completed', 'shipped'].includes(goalStatus);
                         const isActive = ['in progress', 'active', 'in review'].includes(goalStatus);
                         const isHighPriority = goal.priority === 'High' || goal.priority === 'Critical';
+                        const isUnknown = !goalStatus || goalStatus.trim() === '' || goalStatus === 'unknown';
 
                         return (
                             (status === 'overdue' && isOverdue) ||
@@ -128,6 +129,7 @@ export default function DashboardClient({ children }) {
                             (status === 'completed' && isCompleted) ||
                             (status === 'active' && isActive) ||
                             (status === 'high_priority' && isHighPriority) ||
+                            (status === 'unknown' && isUnknown) ||
                             (status === 'at_risk' && (owner.riskLevel === 'amber' || owner.riskLevel === 'red'))
                         );
                     });
@@ -158,6 +160,7 @@ export default function DashboardClient({ children }) {
                     (status === 'completed' && squad.completed > 0) ||
                     (status === 'active' && squad.active > 0) ||
                     (status === 'high_priority' && squad.highPriority > 0) ||
+                    (status === 'unknown' && (squad.unknown || 0) > 0) ||
                     (status === 'critical' && squad.riskLevel === 'red') ||
                     (status === 'at_risk' && (squad.riskLevel === 'amber' || squad.riskLevel === 'red'));
 

@@ -13,17 +13,68 @@ import { RiskBadge, SparkLine, getStatusColor } from './DashboardMetrics';
 import InfoTooltip from './InfoTooltip';
 
 // ─── Owner Grid Component ──────────────────────────
-export function OwnerGrid({ owners, onRowClick }) {
+export function OwnerGrid({ owners, onRowClick, sortConfig, onSort }) {
+    const renderSortIcon = (key) => {
+        if (sortConfig?.key !== key) return null;
+        return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
+    };
+
+    const headerStyle = (key) => ({
+        cursor: onSort ? 'pointer' : 'default',
+        userSelect: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '4px',
+        transition: 'color 0.2s ease',
+        color: sortConfig?.key === key ? 'var(--brand-primary)' : 'inherit'
+    });
+
     return (
         <div className="owner-grid animate-in">
             <div className="grid-header">
-                <div style={{ textAlign: 'left' }}>Team Member</div>
-                <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>Active <InfoTooltip content="Goals currently in progress." size={12} /></div>
-                <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>Done <InfoTooltip content="Completed goals." size={12} /></div>
-                <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>Overdue <InfoTooltip content="Active goals past due date." size={12} /></div>
-                <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>Blocked <InfoTooltip content="Goals flagged as blocked." size={12} /></div>
-                <div style={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>Risk <InfoTooltip content="Automated risk assessment." size={12} /></div>
-                <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>Velocity <InfoTooltip content="Recent completion trend." size={12} /></div>
+                <div
+                    style={{ ...headerStyle('name'), textAlign: 'left', justifyContent: 'flex-start' }}
+                    onClick={() => onSort && onSort('name')}
+                >
+                    Team Member {renderSortIcon('name')}
+                </div>
+                <div
+                    style={headerStyle('active')}
+                    onClick={() => onSort && onSort('active')}
+                >
+                    Active <InfoTooltip content="Goals currently in progress." size={12} /> {renderSortIcon('active')}
+                </div>
+                <div
+                    style={headerStyle('completed')}
+                    onClick={() => onSort && onSort('completed')}
+                >
+                    Done <InfoTooltip content="Completed goals." size={12} /> {renderSortIcon('completed')}
+                </div>
+                <div
+                    style={headerStyle('overdue')}
+                    onClick={() => onSort && onSort('overdue')}
+                >
+                    Overdue <InfoTooltip content="Active goals past due date." size={12} /> {renderSortIcon('overdue')}
+                </div>
+                <div
+                    style={headerStyle('blocked')}
+                    onClick={() => onSort && onSort('blocked')}
+                >
+                    Blocked <InfoTooltip content="Goals flagged as blocked." size={12} /> {renderSortIcon('blocked')}
+                </div>
+                <div
+                    style={headerStyle('risk')}
+                    onClick={() => onSort && onSort('risk')}
+                >
+                    Risk <InfoTooltip content="Automated risk assessment." size={12} /> {renderSortIcon('risk')}
+                </div>
+                <div
+                    style={{ ...headerStyle('velocity'), textAlign: 'right', justifyContent: 'flex-end' }}
+                    onClick={() => onSort && onSort('velocity')}
+                >
+                    Velocity <InfoTooltip content="Recent completion trend." size={12} /> {renderSortIcon('velocity')}
+                </div>
             </div>
             {owners.map(([owner, data]) => (
                 <div
@@ -197,17 +248,22 @@ export function SquadSection({ name, owners, onOwnerClick }) {
                         }}
                     />
                     <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{name}</h3>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>{owners.length} members</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{owners.length} members</span>
                 </div>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '0.75rem' }}>
-                    {stats.totalOverdue > 0 && <span style={{ color: 'var(--signal-red)', fontWeight: 600 }}>{stats.totalOverdue} Overdue</span>}
-                    {stats.totalBlocked > 0 && <span style={{ color: 'var(--signal-amber)', fontWeight: 600 }}>{stats.totalBlocked} Blocked</span>}
-                    {stats.atRisk > 0 && <span className="badge badge-red" style={{ scale: '0.9', margin: 0 }}>{stats.atRisk} at risk</span>}
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {stats.totalOverdue > 0 && <span className="badge badge-red" style={{ margin: 0, padding: '2px 10px', verticalAlign: 'middle' }}>{stats.totalOverdue} Overdue</span>}
+                    {stats.totalBlocked > 0 && <span className="badge badge-amber" style={{ margin: 0, padding: '2px 10px', verticalAlign: 'middle' }}>{stats.totalBlocked} Blocked</span>}
+                    {stats.atRisk > 0 && <span className="badge badge-red" style={{ margin: 0, padding: '2px 10px', verticalAlign: 'middle', background: 'var(--signal-red-bg)', color: 'var(--signal-red)', border: '1px solid var(--signal-red-border)' }}>{stats.atRisk} at risk</span>}
                 </div>
             </div>
             {isOpen && (
                 <div style={{ borderTop: 'none' }}>
-                    <OwnerGrid owners={owners} onRowClick={onOwnerClick} />
+                    <OwnerGrid
+                        owners={owners}
+                        onRowClick={onOwnerClick}
+                        sortConfig={onOwnerClick ? null : owners._sortConfig} // If it's a squad section, it might have its own sort
+                        onSort={onOwnerClick ? null : owners._onSort}
+                    />
                 </div>
             )}
         </div>
@@ -285,7 +341,7 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                 </div>
 
                 <div className="detail-content">
-                    <div className="metrics-grid metrics-grid-3" style={{ gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', width: '100%' }}>
                         <div
                             className={`stat-box clickable ${activeFilter === 'active' ? 'active' : ''}`}
                             onClick={() => toggleFilter('active')}
@@ -367,6 +423,11 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                                                     {goal.goalTitle} <ExternalLink size={10} style={{ display: 'inline', opacity: 0.5 }} />
                                                 </a>
                                                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                                    {goal.initiativeType && ['rock', 'pebble'].includes(goal.initiativeType.toLowerCase()) && (
+                                                        <span className="badge" style={{ fontSize: '0.6rem', padding: '1px 4px', background: 'transparent', color: 'var(--text-secondary)', border: goal.initiativeType.toLowerCase() === 'pebble' ? '1px dashed currentColor' : '1px solid currentColor', textTransform: 'capitalize' }}>
+                                                            {goal.initiativeType}
+                                                        </span>
+                                                    )}
                                                     {isHighPriority(goal) && !isCompleted(goal.status) && (
                                                         <span className="badge badge-red" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Critical</span>
                                                     )}
@@ -420,81 +481,88 @@ export function OwnerDetailPanel({ owner, data, onClose }) {
                             </div>
                         )
                     ))}
-                </div>
 
-                {/* Contributing To Section */}
-                {data.contributedGoals?.length > 0 && (
-                    <div style={{ marginTop: 'var(--space-lg)' }}>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
-                            color: 'var(--text-secondary)'
-                        }}>
-                            <ArrowUpRight size={14} style={{ color: 'var(--signal-purple, #7C3AED)' }} />
-                            Contributing To ({data.contributedGoals.length})
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {data.contributedGoals.map((goal, i) => (
-                                <div key={i} className="card" style={{
-                                    padding: '10px 14px', display: 'flex',
-                                    justifyContent: 'space-between', alignItems: 'center',
-                                    borderLeft: '3px solid var(--signal-purple, #7C3AED)'
-                                }}>
-                                    <div style={{ minWidth: 0, flex: 1 }}>
-                                        <div style={{ fontWeight: 500, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            <a href={goal.notionUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                                                {goal.goalTitle}
-                                            </a>
-                                        </div>
-                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
-                                            Owner: {goal.owner} {goal.dueDate ? `· Due: ${goal.dueDate}` : ''}
-                                        </div>
-                                    </div>
-                                    <span className="badge badge-neutral" style={{ fontSize: '0.65rem', flexShrink: 0 }}>{goal.status}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Collaborators Section */}
-                {Object.keys(data.collaborators || {}).length > 0 && (
-                    <div style={{ marginTop: 'var(--space-lg)' }}>
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: '8px',
-                            marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
-                            color: 'var(--text-secondary)'
-                        }}>
-                            <Building2 size={14} style={{ color: 'var(--brand-primary)' }} />
-                            Collaborators
-                        </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                            {Object.entries(data.collaborators)
-                                .sort((a, b) => b[1] - a[1])
-                                .map(([name, count]) => (
-                                    <div key={name} style={{
-                                        display: 'flex', alignItems: 'center', gap: '8px',
-                                        padding: '8px 12px', borderRadius: 'var(--radius-md)',
-                                        background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
-                                        fontSize: '0.8125rem'
+                    {/* Contributing To Section */}
+                    {data.contributedGoals?.length > 0 && (
+                        <div style={{ marginTop: 'var(--space-lg)' }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
+                                color: 'var(--text-secondary)'
+                            }}>
+                                <ArrowUpRight size={14} style={{ color: 'var(--signal-purple, #7C3AED)' }} />
+                                Contributing To ({data.contributedGoals.length})
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px', width: '100%' }}>
+                                {data.contributedGoals.map((goal, i) => (
+                                    <div key={i} className="card" style={{
+                                        padding: '12px 16px', display: 'flex',
+                                        justifyContent: 'space-between', alignItems: 'center',
+                                        borderLeft: '3px solid var(--signal-purple, #7C3AED)'
                                     }}>
-                                        <div style={{
-                                            width: '24px', height: '24px', borderRadius: '50%',
-                                            background: 'var(--bg-secondary)', color: 'var(--brand-primary)',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: '0.6875rem', fontWeight: 700, flexShrink: 0
-                                        }}>
-                                            {String(name || '?').charAt(0)}
+                                        <div style={{ minWidth: 0, flex: 1 }}>
+                                            <div style={{ fontWeight: 500, fontSize: '0.8125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <a href={goal.notionUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                                                    {goal.goalTitle}
+                                                </a>
+                                                {goal.initiativeType && ['rock', 'pebble'].includes(goal.initiativeType.toLowerCase()) && (
+                                                    <span className="badge" style={{ fontSize: '0.55rem', padding: '0px 4px', background: 'transparent', color: 'var(--text-secondary)', border: goal.initiativeType.toLowerCase() === 'pebble' ? '1px dashed currentColor' : '1px solid currentColor', textTransform: 'capitalize' }}>
+                                                        {goal.initiativeType}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>
+                                                Owner: {goal.owner} {goal.dueDate ? `· Due: ${goal.dueDate}` : ''}
+                                            </div>
                                         </div>
-                                        <span style={{ fontWeight: 500 }}>{name}</span>
-                                        <span className="badge badge-neutral" style={{ fontSize: '0.6rem', padding: '1px 6px' }}>
-                                            {count} shared
-                                        </span>
+                                        <span className="badge badge-neutral" style={{ fontSize: '0.65rem', flexShrink: 0 }}>{goal.status}</span>
                                     </div>
                                 ))}
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+
+                    {/* Collaborators Section */}
+                    {Object.keys(data.collaborators || {}).length > 0 && (
+                        <div style={{ marginTop: 'var(--space-lg)' }}>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                marginBottom: '12px', fontSize: '0.8125rem', fontWeight: 600,
+                                color: 'var(--text-secondary)'
+                            }}>
+                                <Building2 size={14} style={{ color: 'var(--brand-primary)' }} />
+                                Collaborators
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', width: '100%' }}>
+                                {Object.entries(data.collaborators)
+                                    .sort((a, b) => b[1] - a[1])
+                                    .map(([name, count]) => (
+                                        <div key={name} style={{
+                                            display: 'flex', alignItems: 'center', gap: '10px',
+                                            padding: '12px 16px', borderRadius: 'var(--radius-lg)',
+                                            background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
+                                            fontSize: '0.8125rem',
+                                            boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                        }}>
+                                            <div style={{
+                                                width: '28px', height: '28px', borderRadius: '50%',
+                                                background: 'var(--bg-tertiary)', color: 'var(--brand-primary)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: '0.6875rem', fontWeight: 700, flexShrink: 0,
+                                                border: '1.5px solid var(--border-secondary)'
+                                            }}>
+                                                {String(name || '?').charAt(0)}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-tertiary)' }}>{count} shared goals</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -640,6 +708,11 @@ export function SquadDetailPanel({ squadName, data, onClose }) {
                                                     {goal.goalTitle} <ExternalLink size={10} style={{ display: 'inline', opacity: 0.5 }} />
                                                 </a>
                                                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', minWidth: '80px' }}>
+                                                    {goal.initiativeType && ['rock', 'pebble'].includes(goal.initiativeType.toLowerCase()) && (
+                                                        <span className="badge" style={{ fontSize: '0.6rem', padding: '1px 4px', background: 'transparent', color: 'var(--text-secondary)', border: goal.initiativeType.toLowerCase() === 'pebble' ? '1px dashed currentColor' : '1px solid currentColor', textTransform: 'capitalize' }}>
+                                                            {goal.initiativeType}
+                                                        </span>
+                                                    )}
                                                     {isHighPriority(goal) && !isCompleted(goal.status) && (
                                                         <span className="badge badge-red" style={{ fontSize: '0.6rem', padding: '1px 4px' }}>Critical</span>
                                                     )}
@@ -682,6 +755,108 @@ export function SquadDetailPanel({ squadName, data, onClose }) {
                             </div>
                         )
                     ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Collaboration Detail Panel (Drill-Down) ─────────
+export function CollabDetailPanel({ pair, allData, onClose }) {
+    if (!pair || !allData) return null;
+
+    const person1Data = allData[pair.names[0]];
+    const person2Data = allData[pair.names[1]];
+
+    // Find shared goals
+    const p1Goals = person1Data?.goals || [];
+    const p2Goals = person2Data?.goals || [];
+
+    // Shared goals are those where both appear (either as owner or contributor)
+    const sharedGoals = [...p1Goals, ...p2Goals].filter((goal, index, self) => {
+        const isDuplicate = self.findIndex(g => (g.goalTitle === goal.goalTitle)) !== index;
+        if (isDuplicate) return false;
+
+        const involved = [goal.owner, ...(goal.contributors || [])];
+        return pair.names.every(name => involved.includes(name));
+    });
+
+    return (
+        <div className="detail-panel-overlay" onClick={onClose}>
+            <div className="detail-panel animate-in-right" onClick={e => e.stopPropagation()}>
+                <div className="detail-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                {pair.names.map((name, i) => (
+                                    <div key={name} style={{
+                                        width: '28px', height: '28px', borderRadius: '50%',
+                                        background: i === 0 ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+                                        color: 'var(--brand-primary)',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '0.75rem', fontWeight: 700,
+                                        border: '2px solid var(--border-primary)',
+                                        marginLeft: i > 0 ? '-10px' : 0,
+                                        zIndex: 2 - i
+                                    }}>
+                                        {String(name || '?').charAt(0)}
+                                    </div>
+                                ))}
+                            </div>
+                            {pair.names[0]} & {pair.names[1]}
+                        </h2>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                            Working together on {sharedGoals.length} goals
+                        </div>
+                    </div>
+                    <button className="btn btn-ghost" onClick={onClose} style={{ padding: '8px' }}><X size={20} /></button>
+                </div>
+
+                <div className="detail-content" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {sharedGoals.length > 0 ? (
+                            sharedGoals.map((goal, i) => (
+                                <div key={i} className="card task-card" style={{ padding: '16px', borderLeft: `4px solid ${getStatusColor(goal.status)}` }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                        <a
+                                            href={goal.sourceUrl || goal.notionUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="hover-underline"
+                                            style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', textDecoration: 'none', lineHeight: '1.4', flex: 1, marginRight: '16px' }}
+                                        >
+                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{goal.goalTitle}</span> <ExternalLink size={12} style={{ display: 'inline', opacity: 0.5, marginLeft: '4px', flexShrink: 0 }} />
+                                        </a>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                            {goal.initiativeType && ['rock', 'pebble'].includes(goal.initiativeType.toLowerCase()) && (
+                                                <span className="badge" style={{ fontSize: '0.65rem', padding: '1px 4px', background: 'transparent', color: 'var(--text-secondary)', border: goal.initiativeType.toLowerCase() === 'pebble' ? '1px dashed currentColor' : '1px solid currentColor', textTransform: 'capitalize' }}>
+                                                    {goal.initiativeType}
+                                                </span>
+                                            )}
+                                            <span className="badge badge-neutral">{goal.status}</span>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8125rem', color: 'var(--text-tertiary)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ fontSize: '0.75rem' }}>
+                                                Owner: <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{goal.owner}</span>
+                                            </div>
+                                        </div>
+                                        {goal.dueDate && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                <Clock size={12} /> {goal.dueDate}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                                No active shared goals found.
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
